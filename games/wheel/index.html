@@ -3,8 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lucky Wheel</title>
+  <title>Lucky Wheel with Winning Effects</title>
   <style>
+    #currencyBar{
+        position:fixed;
+        top:20px;
+        right:20px;
+  
+        display:flex;
+        align-items:center;
+        gap:10px;
+
+        padding:10px 18px;
+
+        background:rgba(22,27,34,.95);
+        border:2px solid #4cc9ff;
+        border-radius:999px;
+
+        box-shadow:
+            0 0 10px rgba(76,201,255,.4),
+            inset 0 0 8px rgba(255,255,255,.05);
+
+        font-size:1.3rem;
+        font-weight:bold;
+
+        user-select:none;
+        z-index:9999;
+    }
+
+    .gemIcon{
+        font-size:1.5rem;
+        animation:gemFloat 2s ease-in-out infinite;
+        filter:drop-shadow(0 0 6px #4cc9ff);
+    }
+
+    #gemCount{
+        min-width:70px;
+        text-align:right;
+        color:#ffffff;
+        text-shadow:0 0 6px #4cc9ff;
+        transition:transform .25s;
+    }
+
+    @keyframes gemFloat{
+
+        0%,100%{
+            transform:translateY(0);
+        }
+
+        50%{
+            transform:translateY(-3px);
+        }
+
+    }
+    
     * {
       box-sizing: border-box;
       margin: 0;
@@ -20,10 +72,85 @@
       min-height: 100vh;
       background: #1e1e2f;
       color: #fff;
+      overflow: hidden;
     }
 
-    h1 {
+    /* --- ANIMATION EFFECTS --- */
+    @keyframes screenShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      20% { transform: translate(-10px, 8px) rotate(-1deg); }
+      40% { transform: translate(10px, -8px) rotate(1deg); }
+      60% { transform: translate(-8px, -5px) rotate(-1deg); }
+      80% { transform: translate(8px, 5px) rotate(1deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    .shake {
+      animation: screenShake 0.5s ease-in-out infinite;
+    }
+
+    /* Flash Overlay for Epic Wins */
+    #flashOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(255, 215, 0, 0.4);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease-out;
+      z-index: 99;
+    }
+
+    /* Particle Canvas for Confetti & Explosions */
+    #fxCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Popups */
+    .popup {
+      position: fixed;
+      top: 30px;
+      padding: 16px 32px;
+      border-radius: 30px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      transform: translateY(-100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 101;
+    }
+
+    .popup.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .popup-blue {
+      background: linear-gradient(135deg, #00c6ff, #0072ff);
+      border: 2px solid #70a1ff;
+    }
+
+    /* UI Components */
+    .gem-display {
+      background: #2a2a40;
+      padding: 10px 24px;
+      border-radius: 20px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #70a1ff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       margin-bottom: 20px;
+      border: 2px solid #3742fa;
     }
 
     .wheel-container {
@@ -32,7 +159,6 @@
       height: 420px;
     }
 
-    /* Top Marker/Pointer */
     .pointer {
       position: absolute;
       top: -15px;
@@ -46,7 +172,7 @@
       z-index: 10;
     }
 
-    canvas {
+    canvas#wheel {
       width: 100%;
       height: 100%;
       border-radius: 50%;
@@ -54,7 +180,7 @@
     }
 
     button {
-      margin-top: 30px;
+      margin-top: 25px;
       padding: 12px 36px;
       font-size: 1.2rem;
       font-weight: bold;
@@ -80,7 +206,7 @@
     }
 
     #result {
-      margin-top: 20px;
+      margin-top: 15px;
       font-size: 1.4rem;
       font-weight: bold;
       height: 30px;
@@ -91,14 +217,27 @@
 </head>
 <body>
 
-  <h1>Lucky Wheel</h1>
+  <div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">0</span>
+  </div>
+  
+  <!-- Overlay Effects -->
+  <div id="flashOverlay"></div>
+  <canvas id="fxCanvas"></canvas>
+  <div id="popup" class="popup"></div>
+
+  <!-- Gem Display -->
+  <div class="gem-display">
+    💎 Gems: <span id="gemCount">500</span>
+  </div>
 
   <div class="wheel-container">
     <div class="pointer"></div>
     <canvas id="wheel" width="500" height="500"></canvas>
   </div>
 
-  <button id="spinBtn">SPIN</button>
+  <button id="spinBtn">SPIN (100💎)</button>
   <div id="result"></div>
 
   <script>
@@ -106,21 +245,39 @@
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinBtn');
     const resultDiv = document.getElementById('result');
+    const gemCountDisplay = document.getElementById('gemCount');
+    const popup = document.getElementById('popup');
+    const flashOverlay = document.getElementById('flashOverlay');
 
-    // Prize Configuration with Rarity-based Themes
+    // Particle FX Canvas Setup
+    const fxCanvas = document.getElementById('fxCanvas');
+    const fxCtx = fxCanvas.getContext('2d');
+    function resizeFx() {
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeFx);
+    resizeFx();
+
+    let particles = [];
+
+    // Gems State
+    let gems = parseInt(localStorage.getItem('boredgames_gems')) || 500;
+    updateGemUI();
+
     const prizes = [
-      { label: '💎 +50', color: '#888888', rarity: 'Common' },
-      { label: '💎 +75', color: '#777777', rarity: 'Common' },
-      { label: '💎 +100', color: '#888888', rarity: 'Common' },
-      { label: '💎 +150', color: '#777777', rarity: 'Common' },
-      { label: '💎 +250', color: '#2ed573', rarity: 'Uncommon' },
-      { label: '💎 +500', color: '#1e90ff', rarity: 'Rare' },
-      { label: '⭐ +1000', color: '#a55eea', rarity: 'Epic' },
-      { label: '💥 Lose 50', color: '#ff4757', rarity: 'Uncommon' },
-      { label: '❌ Nothing', color: '#57606f', rarity: 'Common' },
-      { label: '🎁 Free Spin', color: '#1e90ff', rarity: 'Rare' },
-      { label: '💎 ×2 Gems', color: '#ff7f50', rarity: 'Very Rare' },
-      { label: '👑 JACKPOT +5000', color: '#ffa502', rarity: 'Ultra Rare' }
+      { label: '💎 +50', color: '#888888', rarity: 'Common', weight: 14 },        // Case 0
+      { label: '💎 +75', color: '#777777', rarity: 'Common', weight: 14 },        // Case 1
+      { label: '💎 +100', color: '#888888', rarity: 'Common', weight: 14 },       // Case 2
+      { label: '💎 +150', color: '#777777', rarity: 'Common', weight: 13 },       // Case 3
+      { label: '💎 +250', color: '#2ed573', rarity: 'Uncommon', weight: 12 },     // Case 4
+      { label: '💎 +500', color: '#1e90ff', rarity: 'Rare', weight: 7 },          // Case 5
+      { label: '⭐ +1000', color: '#a55eea', rarity: 'Epic', weight: 5 },         // Case 6
+      { label: '❌ Nothing', color: '#57606f', rarity: 'Common', weight: 10 },     // Case 7
+      { label: '💥 Lose 50', color: '#ff4757', rarity: 'Uncommon', weight: 8 },   // Case 8
+      { label: '🎁 Free Spin', color: '#1e90ff', rarity: 'Rare', weight: 5 },     // Case 9
+      { label: '💎 ×2 Gems', color: '#ff7f50', rarity: 'Very Rare', weight: 1.5 },// Case 10
+      { label: '👑 JACKPOT +5000', color: '#ffa502', rarity: 'Ultra Rare', weight: 0.5 } // Case 11
     ];
 
     const numSegments = prizes.length;
@@ -130,14 +287,126 @@
     let currentAngle = 0;
     let isSpinning = false;
 
-    // Draw Wheel
+    // --- GEM HELPERS ---
+    function updateGemUI() {
+      gemCountDisplay.textContent = gems;
+      localStorage.setItem('boredgames_gems', gems);
+    }
+
+    function addGems(amount) {
+      gems += amount;
+      updateGemUI();
+    }
+
+    function spendGems(amount) {
+      if (gems >= amount) {
+        gems -= amount;
+        updateGemUI();
+        return true;
+      }
+      return false;
+    }
+
+    // --- SOUND SYNTHESIS (Jackpot Fanfare) ---
+    function playJackpotSound() {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const audioCtx = new AudioCtx();
+
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50]; // C Major Fanfare Arpeggio
+      notes.forEach((freq, index) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.08);
+
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + index * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.08 + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(audioCtx.currentTime + index * 0.08);
+        osc.stop(audioCtx.currentTime + index * 0.08 + 0.4);
+      });
+    }
+
+    // --- VISUAL EFFECT TRIGGERS ---
+    function triggerBluePopup(text) {
+      popup.textContent = text;
+      popup.className = 'popup popup-blue show';
+      setTimeout(() => {
+        popup.classList.remove('show');
+      }, 2500);
+    }
+
+    function triggerGoldFlash() {
+      flashOverlay.style.opacity = '1';
+      setTimeout(() => {
+        flashOverlay.style.opacity = '0';
+      }, 300);
+    }
+
+    function triggerJackpotEffects() {
+      // 1. Screen Shake
+      document.body.classList.add('shake');
+      setTimeout(() => {
+        document.body.classList.remove('shake');
+      }, 1500);
+
+      // 2. Play Sound
+      playJackpotSound();
+
+      // 3. Spawn Confetti & Rainbow Explosion
+      const colors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee', '#ffffff', '#ffd700'];
+      for (let i = 0; i < 200; i++) {
+        particles.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+          vx: (Math.random() - 0.5) * 20,
+          vy: (Math.random() - 0.7) * 20,
+          size: Math.random() * 10 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          gravity: 0.25,
+          drag: 0.98
+        });
+      }
+    }
+
+    // Particle Animation Loop
+    function updateParticles() {
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.vx *= p.drag;
+        p.vy *= p.drag;
+        p.vy += p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.008;
+
+        fxCtx.save();
+        fxCtx.globalAlpha = Math.max(p.alpha, 0);
+        fxCtx.fillStyle = p.color;
+        fxCtx.fillRect(p.x, p.y, p.size, p.size);
+        fxCtx.restore();
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+      requestAnimationFrame(updateParticles);
+    }
+    updateParticles();
+
+    // --- DRAW WHEEL ---
     function drawWheel() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < numSegments; i++) {
         const angle = currentAngle + i * arcSize;
         
-        // Draw Slice
         ctx.beginPath();
         ctx.fillStyle = prizes[i].color;
         ctx.moveTo(radius, radius);
@@ -145,12 +414,10 @@
         ctx.lineTo(radius, radius);
         ctx.fill();
 
-        // Slice Border
         ctx.strokeStyle = '#1e1e2f';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // Draw Text
         ctx.save();
         ctx.translate(radius, radius);
         ctx.rotate(angle + arcSize / 2);
@@ -162,18 +429,46 @@
       }
     }
 
+    function selectWeightedWinner() {
+      const totalWeight = prizes.reduce((acc, p) => acc + p.weight, 0);
+      let randomVal = Math.random() * totalWeight;
+
+      for (let i = 0; i < prizes.length; i++) {
+        if (randomVal < prizes[i].weight) return i;
+        randomVal -= prizes[i].weight;
+      }
+      return 0;
+    }
+
     function spin() {
       if (isSpinning) return;
+
+      if (!spendGems(100)) {
+        resultDiv.textContent = "❌ Need 100💎";
+        return;
+      }
 
       isSpinning = true;
       spinBtn.disabled = true;
       resultDiv.textContent = '';
 
-      const extraSpins = 5 + Math.floor(Math.random() * 5);
-      const randomStopAngle = Math.random() * 2 * Math.PI;
-      const totalRotation = extraSpins * 2 * Math.PI + randomStopAngle;
+      const winner = selectWeightedWinner();
 
-      const duration = 4500; // 4.5 seconds
+      const pointerAngle = (3 * Math.PI) / 2;
+      const sliceCenterAngle = winner * arcSize + arcSize / 2;
+      let targetAngleOffset = pointerAngle - sliceCenterAngle;
+      
+      const slicePadding = (Math.random() - 0.5) * (arcSize * 0.7);
+      targetAngleOffset += slicePadding;
+
+      const extraSpins = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+      const normalizedCurrent = currentAngle % (2 * Math.PI);
+      let rotationDelta = targetAngleOffset - normalizedCurrent;
+      
+      while (rotationDelta < 0) rotationDelta += 2 * Math.PI;
+      
+      const totalRotation = extraSpins + rotationDelta;
+      const duration = 4500;
       const startTime = performance.now();
       const startAngle = currentAngle;
 
@@ -181,8 +476,7 @@
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Exponential ease-out for smooth stopping animation
-        const easeOut = 1 - Math.pow(1 - progress, 4);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
         currentAngle = startAngle + totalRotation * easeOut;
 
         drawWheel();
@@ -192,21 +486,63 @@
         } else {
           isSpinning = false;
           spinBtn.disabled = false;
-          determineWinner();
+
+          // Process payout & effects
+          switch (winner) {
+            case 0:
+              addGems(50);
+              triggerBluePopup("💎 +50 Gems!");
+              break;
+            case 1:
+              addGems(75);
+              triggerBluePopup("💎 +75 Gems!");
+              break;
+            case 2:
+              addGems(100);
+              triggerBluePopup("💎 +100 Gems!");
+              break;
+            case 3:
+              addGems(150);
+              triggerBluePopup("💎 +150 Gems!");
+              break;
+            case 4:
+              addGems(250);
+              triggerBluePopup("💎 +250 Gems!");
+              break;
+            case 5:
+              addGems(500);
+              triggerBluePopup("💎 +500 Gems!");
+              break;
+            case 6:
+              addGems(1000);
+              triggerGoldFlash();
+              break;
+            case 7:
+              // Nothing
+              break;
+            case 8:
+              spendGems(50);
+              break;
+            case 9:
+              // Free spin payout
+              addGems(100);
+              triggerBluePopup("🎁 Free Spin (+100💎)!");
+              break;
+            case 10:
+              addGems(gems);
+              triggerGoldFlash();
+              break;
+            case 11:
+              addGems(5000);
+              triggerJackpotEffects();
+              break;
+          }
+
+          resultDiv.textContent = `Landed on: ${prizes[winner].label}!`;
         }
       }
 
       requestAnimationFrame(animate);
-    }
-
-    function determineWinner() {
-      const normalizedAngle = currentAngle % (2 * Math.PI);
-      const pointerAngle = (3 * Math.PI) / 2; // Top position
-      
-      let winningIndex = Math.floor((2 * Math.PI + pointerAngle - normalizedAngle) % (2 * Math.PI) / arcSize);
-      const prize = prizes[winningIndex];
-
-      resultDiv.textContent = `🎉 You landed on: ${prize.label} (${prize.rarity})!`;
     }
 
     // Initial Render
@@ -215,5 +551,7 @@
     // Event Listener
     spinBtn.addEventListener('click', spin);
   </script>
+
+  <script src="../../currency.js"></script>
 </body>
 </html>
