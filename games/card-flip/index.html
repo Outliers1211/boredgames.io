@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card Flip</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#111827;
+    color:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    padding:30px;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.score{
+    font-size:2rem;
+    margin-bottom:20px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(4,110px);
+    gap:18px;
+    margin-bottom:30px;
+}
+
+.card{
+    width:110px;
+    height:150px;
+    perspective:1000px;
+    cursor:pointer;
+}
+
+.inner{
+    position:relative;
+    width:100%;
+    height:100%;
+    transition:transform .6s;
+    transform-style:preserve-3d;
+}
+
+.flipped .inner{
+    transform:rotateY(180deg);
+}
+
+.front,.back{
+    position:absolute;
+    width:100%;
+    height:100%;
+    border-radius:12px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:2rem;
+    font-weight:bold;
+    backface-visibility:hidden;
+}
+
+.front{
+    background:#2563eb;
+}
+
+.back{
+    transform:rotateY(180deg);
+}
+
+.plus{
+    background:#16a34a;
+}
+
+.minus{
+    background:#dc2626;
+}
+
+.controls{
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
+}
+
+button{
+    padding:12px 22px;
+    font-size:1rem;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.bank{
+    background:#16a34a;
+    color:white;
+}
+
+.restart{
+    background:#2563eb;
+    color:white;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.message{
+    font-size:1.2rem;
+    min-height:30px;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🃏 Card Flip</h1>
+
+<div class="score">
+Score: <span id="score">0</span>
+</div>
+
+<div class="controls">
+<button class="bank" onclick="bank()">💰 Bank Score</button>
+<button class="restart" onclick="newGame()">🔄 New Game</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="message" id="message">
+Flip a card... or bank your points!
+</div>
+
+<script>
+
+const values = [
+50,50,20,20,10,10,5,5,
+-5,-5,-10,-10,-20,-20,-50,-50
+];
+
+let score = 0;
+let gameOver = false;
+
+const grid = document.getElementById("grid");
+const scoreText = document.getElementById("score");
+const message = document.getElementById("message");
+
+function shuffle(array){
+    for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i],array[j]]=[array[j],array[i]];
+    }
+}
+
+function createCards(){
+
+    grid.innerHTML="";
+
+    shuffle(values);
+
+    values.forEach(value=>{
+
+        const card=document.createElement("div");
+        card.className="card";
+
+        const inner=document.createElement("div");
+        inner.className="inner";
+
+        const front=document.createElement("div");
+        front.className="front";
+        front.innerHTML="?";
+
+        const back=document.createElement("div");
+        back.className="back";
+        back.innerHTML=(value>0?"+":"")+value;
+
+        back.classList.add(value>0?"plus":"minus");
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+
+        card.appendChild(inner);
+
+        card.onclick=()=>{
+
+            if(gameOver) return;
+            if(card.classList.contains("flipped")) return;
+
+            card.classList.add("flipped");
+
+            score+=value;
+            scoreText.textContent=score;
+
+            if(score<0){
+                score=0;
+                scoreText.textContent=0;
+            }
+
+            if([...document.querySelectorAll(".card")].every(c=>c.classList.contains("flipped"))){
+                gameOver=true;
+                message.textContent="All cards flipped! Final score: "+score;
+            }
+
+        }
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+function bank(){
+
+    if(gameOver) return;
+
+    gameOver=true;
+
+    message.textContent="You banked "+score+" points!";
+
+}
+
+function newGame(){
+
+    score=0;
+    gameOver=false;
+    scoreText.textContent=0;
+    message.textContent="Flip a card... or bank your points!";
+
+    createCards();
+
+}
+
+createCards();
+
+</script>
+
+</body>
+</html>
