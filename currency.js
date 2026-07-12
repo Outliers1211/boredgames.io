@@ -74,10 +74,15 @@ function spendGems(amount){
         return false;
 
     gems -= amount;
+
     saveGems();
+
     updateGemDisplay();
 
+    gemPopup(-amount);
+
     return true;
+
 }
 
 // Display
@@ -164,22 +169,24 @@ function gemPopup(amount){
 
     const popup = document.createElement("div");
 
-    popup.textContent = "+" + amount + " 💎";
+    popup.textContent = (amount > 0 ? "+" : "") + amount + " 💎";
 
     popup.style.position = "fixed";
     popup.style.right = "35px";
     popup.style.top = "70px";
-    popup.style.color = "#4cc9ff";
     popup.style.fontWeight = "bold";
     popup.style.fontSize = "22px";
     popup.style.pointerEvents = "none";
     popup.style.zIndex = "10000";
 
+    // Green for gains, red for spending
+    popup.style.color = amount >= 0 ? "#4cc9ff" : "#ff5555";
+
     document.body.appendChild(popup);
 
     popup.animate([
-        {transform:"translateY(0)",opacity:1},
-        {transform:"translateY(-40px)",opacity:0}
+        { transform:"translateY(0)", opacity:1 },
+        { transform:"translateY(-40px)", opacity:0 }
     ],{
         duration:1000,
         easing:"ease-out"
