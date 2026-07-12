@@ -182,6 +182,8 @@ Flip a card... or bank your points!
 
 <script>
 
+let boardLocked = false;
+
 function animateScore(){
 
     scoreText.style.transform = "scale(1.3)";
@@ -197,24 +199,27 @@ function animateScore(){
 
 function newBoard(){
 
-    if(gameOver) return;
+    if(gameOver || boardLocked) return;
+
+    boardLocked = true;
+    grid.style.pointerEvents = "none";
 
     revealRemainingCards();
 
     message.textContent = "🎴 Dealing a new board...";
 
-    // Wait for the reveal animation
     setTimeout(()=>{
 
-        // Flip every card back over
         document.querySelectorAll(".card").forEach(card=>{
             card.classList.remove("flipped");
         });
 
-        // Wait for the flip-back animation
         setTimeout(()=>{
 
             createCards();
+
+            boardLocked = false;
+            grid.style.pointerEvents = "auto";
 
             message.textContent = "Fresh board! Your score carries over.";
 
