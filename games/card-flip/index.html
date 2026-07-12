@@ -201,13 +201,24 @@ function newBoard(){
 
     revealRemainingCards();
 
-    message.textContent = "🎴 Revealing remaining cards...";
+    message.textContent = "🎴 Dealing a new board...";
 
+    // Wait for the reveal animation
     setTimeout(()=>{
 
-        createCards();
+        // Flip every card back over
+        document.querySelectorAll(".card").forEach(card=>{
+            card.classList.remove("flipped");
+        });
 
-        message.textContent = "Fresh board! Your score carries over.";
+        // Wait for the flip-back animation
+        setTimeout(()=>{
+
+            createCards();
+
+            message.textContent = "Fresh board! Your score carries over.";
+
+        },700);
 
     },1500);
 
@@ -425,7 +436,22 @@ function createCards(){
 
         }
 
+        values.forEach((value, index) => {
+
+            // ... create the card ...
+
+        card.style.opacity = "0";
+        card.style.transform = "translateY(-20px)";
+
         grid.appendChild(card);
+
+        setTimeout(() => {
+            card.style.transition = "opacity 0.25s, transform 0.25s";
+            card.style.opacity = "1";
+            card.style.transform = "translateY(0)";
+        }, index * 60);
+
+    });
 
     });
 
