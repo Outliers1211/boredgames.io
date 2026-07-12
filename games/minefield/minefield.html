@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minefield Sweeper</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #0f172a;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 15px;
+}
+
+#currencyBar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(30, 41, 59, 0.95);
+    border: 2px solid #38bdf8;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    font-size: 1.2rem;
+    font-weight: bold;
+    z-index: 100;
+}
+
+.gemIcon {
+    font-size: 1.4rem;
+    animation: gemFloat 2s ease-in-out infinite;
+}
+
+@keyframes gemFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+h1 {
+    margin-bottom: 5px;
+    color: #f8fafc;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.sub-header {
+    color: #94a3b8;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.game-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.input-group label {
+    font-weight: bold;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.bet-inputs {
+    display: flex;
+    gap: 6px;
+}
+
+input[type="number"] {
+    width: 90px;
+    padding: 8px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.btn-small {
+    padding: 6px 10px;
+    background: #334155;
+    border: none;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-small:hover { background: #475569; }
+
+select {
+    padding: 8px 12px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.grid-board {
+    display: flex;
+    flex-direction: column-reverse; /* Row 1 starts at bottom */
+    gap: 8px;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: 50px repeat(4, 1fr);
+    gap: 8px;
+    align-items: center;
+    padding: 4px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.4);
+    transition: background 0.3s;
+}
+
+.grid-row.active {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid #38bdf8;
+}
+
+.grid-row.disabled {
+    opacity: 0.5;
+}
+
+.row-multiplier {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #38bdf8;
+    text-align: center;
+}
+
+.tile {
+    aspect-ratio: 1;
+    background: #334155;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: transform 0.15s, background 0.2s;
+    user-select: none;
+}
+
+.grid-row.active .tile:hover {
+    transform: scale(1.05);
+    background: #475569;
+    border-color: #38bdf8;
+}
+
+.tile.revealed-gem {
+    background: #059669;
+    border-color: #10b981;
+}
+
+.tile.revealed-mine {
+    background: #dc2626;
+    border-color: #ef4444;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-start { background: #2563eb; color: #fff; }
+.btn-cashout { background: #16a34a; color: #fff; }
+
+.status-box {
+    text-align: center;
+    min-height: 24px;
+    font-weight: bold;
+    color: #cbd5e1;
+}
+</style>
+</head>
+
+<body>
+
+<div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">1000</span>
+</div>
+
+<h1>💣 Minefield Sweeper</h1>
+<p class="sub-header">Climb the rows, dodge mines, and bank your multiplier!</p>
+
+<div class="game-container">
+    <div class="controls-panel">
+        <div class="input-group">
+            <label for="betInput">Bet Amount:</label>
+            <div class="bet-inputs">
+                <input type="number" id="betInput" value="50" min="10" step="10">
+                <button class="btn-small" onclick="setBetFraction(0.5)">½</button>
+                <button class="btn-small" onclick="setBetFraction(2)">2x</button>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="mineSelect">Mines per Row:</label>
+            <select id="mineSelect" onchange="calculateMultipliers()">
+                <option value="1">1 Mine (Safer)</option>
+                <option value="2" selected>2 Mines (Balanced)</option>
+                <option value="3">3 Mines (High Risk)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="action-buttons">
+        <button id="startBtn" class="btn btn-start" onclick="startGame()">Start Round</button>
+        <button id="cashoutBtn" class="btn btn-cashout" onclick="cashOut()" disabled>Cash Out</button>
+    </div>
+
+    <div class="status-box" id="statusBox">Set your bet and start the round!</div>
+
+    <div class="grid-board" id="gridBoard"></div>
+</div>
+
+<script>
+// Global State
+let userGems = 1000;
+let currentBet = 50;
+let minesPerRow = 2;
+let currentRow = 0;
+let gameActive = false;
+let boardData = [];
+let rowMultipliers = [];
+
+const TOTAL_ROWS = 8;
+const TILES_PER_ROW = 4;
+
+// Audio Synthesizer (Web Audio API - No external files needed)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'step') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400 + currentRow * 60, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+    } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.1);
+        osc.frequency.setValueAtTime(783.99, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'boom') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+}
+
+// Multiplier Logic
+function calculateMultipliers() {
+    minesPerRow = parseInt(document.getElementById('mineSelect').value);
+    const safeTiles = TILES_PER_ROW - minesPerRow;
+    const probabilityOfSafe = safeTiles / TILES_PER_ROW;
+    
+    rowMultipliers = [];
+    let cumulativeProb = 1.0;
+    const houseEdge = 0.96; // 4% house edge
+
+    for (let r = 0; r < TOTAL_ROWS; r++) {
+        cumulativeProb *= probabilityOfSafe;
+        let mult = (1 / cumulativeProb) * houseEdge;
+        rowMultipliers.push(parseFloat(mult.toFixed(2)));
+    }
+    
+    if (!gameActive) renderBoard();
+}
+
+function updateUI() {
+    document.getElementById('gemCount').textContent = userGems;
+    document.getElementById('startBtn').disabled = gameActive;
+    document.getElementById('mineSelect').disabled = gameActive;
+    document.getElementById('betInput').disabled = gameActive;
+    
+    const cashoutBtn = document.getElementById('cashoutBtn');
+    if (gameActive && currentRow > 0) {
+        const currentWin = Math.floor(currentBet * rowMultipliers[currentRow - 1]);
+        cashoutBtn.disabled = false;
+        cashoutBtn.textContent = `Cash Out (💎${currentWin})`;
+    } else {
+        cashoutBtn.disabled = true;
+        cashoutBtn.textContent = 'Cash Out';
+    }
+}
+
+function setBetFraction(factor) {
+    if (gameActive) return;
+    const input = document.getElementById('betInput');
+    let newBet = Math.floor(parseInt(input.value) * factor);
+    if (newBet < 10) newBet = 10;
+    input.value = newBet;
+}
+
+function renderBoard() {
+    const board = document.getElementById('gridBoard');
+    board.innerHTML = '';
+
+    for (let r = 0; r < TOTAL_ROWS; r++) {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'grid-row';
+        if (gameActive && r === currentRow) rowEl.classList.add('active');
+        if (r > currentRow) rowEl.classList.add('disabled');
+
+        const multLabel = document.createElement('div');
+        multLabel.className = 'row-multiplier';
+        multLabel.textContent = `${rowMultipliers[r]}x`;
+        rowEl.appendChild(multLabel);
+
+        for (let t = 0; t < TILES_PER_ROW; t++) {
+            const tileEl = document.createElement('div');
+            tileEl.className = 'tile';
+            tileEl.textContent = '❓';
+
+            tileEl.onclick = () => handleTileClick(r, t, tileEl);
+            rowEl.appendChild(tileEl);
+        }
+
+        board.appendChild(rowEl);
+    }
+}
+
+function generateMineLayout() {
+    boardData = [];
+    for (let r = 0; r < TOTAL_ROWS; r++) {
+        let row = Array(TILES_PER_ROW).fill('gem');
+        let placedMines = 0;
+        while (placedMines < minesPerRow) {
+            let idx = Math.floor(Math.random() * TILES_PER_ROW);
+            if (row[idx] !== 'mine') {
+                row[idx] = 'mine';
+                placedMines++;
+            }
+        }
+        boardData.push(row);
+    }
+}
+
+function startGame() {
+    const betVal = parseInt(document.getElementById('betInput').value);
+    if (isNaN(betVal) || betVal < 10) {
+        document.getElementById('statusBox').textContent = '❌ Minimum bet is 10 💎!';
+        return;
+    }
+    if (betVal > userGems) {
+        document.getElementById('statusBox').textContent = '❌ Insufficient 💎 balance!';
+        return;
+    }
+
+    currentBet = betVal;
+    userGems -= currentBet;
+    currentRow = 0;
+    gameActive = true;
+
+    generateMineLayout();
+    renderBoard();
+    updateUI();
+
+    document.getElementById('statusBox').textContent = 'Pick a tile on Row 1 to begin!';
+}
+
+function handleTileClick(rowIndex, tileIndex, tileEl) {
+    if (!gameActive || rowIndex !== currentRow) return;
+
+    const isMine = boardData[rowIndex][tileIndex] === 'mine';
+
+    if (isMine) {
+        // Mine Hit
+        tileEl.classList.add('revealed-mine');
+        tileEl.textContent = '💣';
+        playSound('boom');
+        endGame(false);
+    } else {
+        // Safe Tile
+        tileEl.classList.add('revealed-gem');
+        tileEl.textContent = '💎';
+        playSound('step');
+
+        currentRow++;
+
+        if (currentRow >= TOTAL_ROWS) {
+            // Reached top!
+            cashOut(true);
+        } else {
+            document.getElementById('statusBox').textContent = `Safe! Multiplier increased to ${rowMultipliers[currentRow-1]}x`;
+            renderBoardState();
+            updateUI();
+        }
+    }
+}
+
+function renderBoardState() {
+    const rows = document.querySelectorAll('.grid-row');
+    rows.forEach((rowEl, rIdx) => {
+        rowEl.classList.remove('active', 'disabled');
+        if (rIdx === currentRow) rowEl.classList.add('active');
+        if (rIdx > currentRow) rowEl.classList.add('disabled');
+    });
+}
+
+function cashOut(clearedAll = false) {
+    if (!gameActive || currentRow === 0) return;
+
+    const winnings = Math.floor(currentBet * rowMultipliers[currentRow - 1]);
+    userGems += winnings;
+    playSound('win');
+
+    if (clearedAll) {
+        document.getElementById('statusBox').textContent = `🏆 PERFECT RUN! You won ${winnings} 💎!`;
+    } else {
+        document.getElementById('statusBox').textContent = `💰 Banked ${winnings} 💎 at ${rowMultipliers[currentRow-1]}x!`;
+    }
+
+    endGame(true);
+}
+
+function endGame(won) {
+    gameActive = false;
+
+    // Reveal entire board
+    const rows = document.querySelectorAll('.grid-row');
+    rows.forEach((rowEl, rIdx) => {
+        rowEl.classList.remove('active', 'disabled');
+        const tiles = rowEl.querySelectorAll('.tile');
+        tiles.forEach((tileEl, tIdx) => {
+            if (boardData[rIdx][tIdx] === 'mine') {
+                tileEl.classList.add('revealed-mine');
+                tileEl.textContent = '💣';
+            } else {
+                tileEl.classList.add('revealed-gem');
+                tileEl.textContent = '💎';
+            }
+        });
+    });
+
+    if (!won) {
+        document.getElementById('statusBox').textContent = '💣 BOOM! Mine hit, round lost!';
+    }
+
+    updateUI();
+}
+
+// Initial initialization
+calculateMultipliers();
+updateUI();
+</script>
+
+<script src="../../currency.js"></script>
+</body>
+</html>
