@@ -233,10 +233,10 @@ function getCardColor(value){
 
     switch(value){
 
-        case 5: return "#d8ffd6";
-        case 10: return "#b0fcac";
-        case 20: return "#89fc83";
-        case 50: return "#3bf53b";
+        case 5: return "#98ff8c";
+        case 10: return "#72fc62";
+        case 20: return "#52fc3f";
+        case 50: return "#1cfc03";
         case 100: return "#deb214";
 
         case "jackpot1":
@@ -287,10 +287,10 @@ function createCards(){
             back.innerHTML="💣";
         }
         else if(value==="jackpot1"){
-            back.innerHTML=" 💎<br>+777";
+            back.innerHTML="+777";
         }
         else if(value==="jackpot2"){
-            back.innerHTML=" 💎<br>x7";
+            back.innerHTML="x7";
         }
         else{
             back.innerHTML=(value>0?"+":"")+value;
