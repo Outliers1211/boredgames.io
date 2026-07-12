@@ -22,32 +22,43 @@ body {
     padding: 20px 15px;
 }
 
-#currencyBar {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 18px;
-    background: rgba(30, 41, 59, 0.95);
-    border: 2px solid #38bdf8;
-    border-radius: 999px;
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
-    font-size: 1.2rem;
-    font-weight: bold;
-    z-index: 100;
-}
+    /* --- CURRENCY BAR --- */
+    #currencyBar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: rgba(22, 27, 34, 0.95);
+      border: 2px solid #4cc9ff;
+      border-radius: 999px;
+      box-shadow: 0 0 10px rgba(76, 201, 255, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.05);
+      font-size: 1.3rem;
+      font-weight: bold;
+      user-select: none;
+      z-index: 9999;
+    }
 
-.gemIcon {
-    font-size: 1.4rem;
-    animation: gemFloat 2s ease-in-out infinite;
-}
+    .gemIcon {
+      font-size: 1.5rem;
+      animation: gemFloat 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 6px #4cc9ff);
+    }
 
-@keyframes gemFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-}
+    #gemCount {
+      min-width: 70px;
+      text-align: right;
+      color: #ffffff;
+      text-shadow: 0 0 6px #4cc9ff;
+    }
+
+    @keyframes gemFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
 
 h1 {
     margin-bottom: 5px;
@@ -232,11 +243,11 @@ select {
 
 <body>
 
-<div id="currencyBar">
+  <div id="currencyBar">
     <span class="gemIcon">💎</span>
-    <span id="gemCount">1000</span>
-</div>
-
+    <span id="gemCount">0</span>
+  </div>
+    
 <h1>💣 Minefield Sweeper</h1>
 <p class="sub-header">Climb the rows, dodge mines, and bank your multiplier!</p>
 
@@ -417,10 +428,13 @@ function startGame() {
         document.getElementById('statusBox').textContent = '❌ Minimum bet is 10 💎!';
         return;
     }
-    if (betVal > userGems) {
-        document.getElementById('statusBox').textContent = '❌ Insufficient 💎 balance!';
-        return;
-    }
+      if (typeof spendGems === 'function') {
+        if (!spendGems(betVal)) {
+          statusMsg.className = 'lose-text';
+          statusMsg.textContent = "❌ insufficient💎 balance!";
+          return;
+        }
+      }
 
     currentBet = betVal;
     userGems -= currentBet;
@@ -477,7 +491,7 @@ function cashOut(clearedAll = false) {
     if (!gameActive || currentRow === 0) return;
 
     const winnings = Math.floor(currentBet * rowMultipliers[currentRow - 1]);
-    userGems += winnings;
+    addgems(winnings);
     playSound('win');
 
     if (clearedAll) {
