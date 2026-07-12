@@ -321,6 +321,8 @@ function createCards(){
 
     grid.innerHTML="";
 
+    new Audio("oxidvideos-taking-playing-card-522520.mp3").play();
+
     const values=createDeck();
 
     values.forEach(value=>{
@@ -397,6 +399,8 @@ function createCards(){
 
             card.classList.add("flipped");
 
+            new Audio("oxidvideos-taking-playing-card-522520.mp3").play();
+
             if(value==="double"){
 
             score*=2;
@@ -413,6 +417,8 @@ function createCards(){
             
             gameOver = true;
 
+            new Audio("roblox-explosion-sound.mp3").play();
+
             revealRemainingCards();
 
             message.textContent = "💣 BOOM! You lost everything!";
@@ -421,10 +427,12 @@ function createCards(){
             
         else if(value==="jackpot1"){
             score+=777;
+            new Audio("slot-machine-jackpot-sound-effect.mp3").play();
         }
             
         else if(value==="jackpot2"){
             score*=7;
+            new Audio("slot-machine-jackpot-sound-effect.mp3").play();
         }
             
         else{
@@ -464,6 +472,7 @@ function createCards(){
 
 function revealRemainingCards(){
 
+    new Audio("oxidvideos-taking-playing-card-522520.mp3").play();
     document.querySelectorAll(".card").forEach(card=>{
         card.classList.add("flipped");
     });
