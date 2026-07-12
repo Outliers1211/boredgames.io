@@ -101,6 +101,29 @@ h1{
         0 0 40px hotpink;
 }
 
+@keyframes goldPulse {
+    0% {
+        box-shadow: 0 0 8px #deb214;
+        transform: rotateY(180deg) scale(1);
+    }
+    50% {
+        box-shadow: 0 0 25px gold;
+        transform: rotateY(180deg) scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 8px #deb214;
+        transform: rotateY(180deg) scale(1);
+    }
+}
+
+.gold-card{
+    animation: goldPulse 1.5s infinite;
+    color: white;
+    text-shadow:
+        0 0 5px white,
+        0 0 12px gold;
+}
+
 .controls{
     display:flex;
     gap:15px;
@@ -158,6 +181,19 @@ Flip a card... or bank your points!
 </div>
 
 <script>
+
+function animateScore(){
+
+    scoreText.style.transform = "scale(1.3)";
+    scoreText.style.color = "#ffd700";
+
+    setTimeout(()=>{
+        scoreText.textContent = score;
+        scoreText.style.transform = "scale(1)";
+        scoreText.style.color = "white";
+    },100);
+
+}
 
 function newBoard(){
 
@@ -251,7 +287,7 @@ function getCardColor(value){
         case -50: return "#9e0606";
 
         case "double": return "#11e6ed";
-        case "half": return "#d9d325";
+        case "half": return "#fcca00";
         case "bomb": return "#290103";
     }
 
@@ -296,6 +332,7 @@ function createCards(){
             back.innerHTML=(value>0?"+":"")+value;
         }
 
+        
         if(value==="double"){
             back.style.background="#11e6ed"; // blue
         }
@@ -314,6 +351,10 @@ function createCards(){
             back.classList.add("jackpot");
         } else {
             back.style.background = color;
+        }
+
+        if(value === 100){
+            back.classList.add("gold-card");
         }
         }
 
@@ -365,7 +406,7 @@ function createCards(){
 
         }
 
-        scoreText.textContent=score;
+        animateScore();
 
         }
 
