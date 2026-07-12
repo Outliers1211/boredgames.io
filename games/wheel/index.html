@@ -246,10 +246,6 @@
 
     let particles = [];
 
-    // Gems State
-    let gems = parseInt(localStorage.getItem('boredgames_gems')) || 500;
-    updateGemUI();
-
     const prizes = [
       { label: '💎 +50', color: '#888888', rarity: 'Common', weight: 14 },        // Case 0
       { label: '💎 +75', color: '#777777', rarity: 'Common', weight: 14 },        // Case 1
@@ -271,26 +267,6 @@
 
     let currentAngle = 0;
     let isSpinning = false;
-
-    // --- GEM HELPERS ---
-    function updateGemUI() {
-      gemCountDisplay.textContent = gems;
-      localStorage.setItem('boredgames_gems', gems);
-    }
-
-    function addGems(amount) {
-      gems += amount;
-      updateGemUI();
-    }
-
-    function spendGems(amount) {
-      if (gems >= amount) {
-        gems -= amount;
-        updateGemUI();
-        return true;
-      }
-      return false;
-    }
 
     // --- SOUND SYNTHESIS (Jackpot Fanfare) ---
     function playJackpotSound() {
