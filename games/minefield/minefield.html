@@ -428,7 +428,7 @@ function startGame() {
         return;
     }
       if (typeof spendGems === 'function') {
-        if (!spendGems(betVal)) {
+        if (!spendGems(currentBet)) {
           statusMsg.className = 'lose-text';
           statusMsg.textContent = "❌ insufficient💎 balance!";
           return;
@@ -436,7 +436,6 @@ function startGame() {
       }
 
     currentBet = betVal;
-    userGems -= currentBet;
     currentRow = 0;
     gameActive = true;
 
