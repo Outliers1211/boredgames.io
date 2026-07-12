@@ -1,473 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Card Flip</title>
 
 <style>
-
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Inter,Arial,sans-serif;
+    font-family:Arial, Helvetica, sans-serif;
 }
 
 body{
-
     background:#111827;
     color:white;
-
-    min-height:100vh;
-
     display:flex;
-    justify-content:center;
+    flex-direction:column;
     align-items:center;
-
-    padding:40px;
-
-}
-
-.container{
-
-    width:100%;
-    max-width:950px;
-
+    min-height:100vh;
+    padding:30px;
 }
 
 h1{
-
-    text-align:center;
-    font-size:3rem;
-
+    margin-bottom:10px;
 }
 
-.subtitle{
-
-    text-align:center;
-    color:#9ca3af;
-    margin-top:8px;
-    margin-bottom:30px;
-
-}
-
-.stats{
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-    flex-wrap:wrap;
-
-    gap:15px;
-
-    margin-bottom:25px;
-
-}
-
-.panel{
-
-    background:#1f2937;
-
-    padding:18px 24px;
-
-    border-radius:14px;
-
-    min-width:170px;
-
-    text-align:center;
-
-    box-shadow:0 0 15px rgba(0,0,0,.25);
-
-}
-
-.panel h2{
-
-    font-size:.95rem;
-    color:#9ca3af;
-    margin-bottom:6px;
-
-}
-
-.value{
-
+.score{
     font-size:2rem;
-    font-weight:bold;
-
-}
-
-#score{
-
-    color:#22c55e;
-
-    transition:.3s;
-
-}
-
-#highScore{
-
-    color:#fbbf24;
-
-}
-
-.buttons{
-
-    display:flex;
-
-    justify-content:center;
-
-    gap:15px;
-
-    flex-wrap:wrap;
-
-    margin-bottom:35px;
-
-}
-
-button{
-
-    border:none;
-
-    padding:14px 24px;
-
-    border-radius:12px;
-
-    color:white;
-
-    cursor:pointer;
-
-    font-size:1rem;
-
-    transition:.25s;
-
-}
-
-button:hover{
-
-    transform:translateY(-3px);
-
-}
-
-.bank{
-
-    background:#16a34a;
-
-}
-
-.deal{
-
-    background:#2563eb;
-
-}
-
-.reset{
-
-    background:#dc2626;
-
+    margin-bottom:20px;
 }
 
 .grid{
-
     display:grid;
-
-    grid-template-columns:repeat(4,1fr);
-
+    grid-template-columns:repeat(4,110px);
     gap:18px;
-
+    margin-bottom:30px;
 }
 
 .card{
-
-    perspective:900px;
-
+    width:110px;
     height:150px;
-
+    perspective:1000px;
     cursor:pointer;
-
-}
-
-.card.disabled{
-
-    cursor:default;
-
 }
 
 .inner{
-
+    position:relative;
     width:100%;
     height:100%;
-
-    position:relative;
-
-    transition:.6s;
-
+    transition:transform .6s;
     transform-style:preserve-3d;
-
 }
 
-.card.flipped .inner{
-
+.flipped .inner{
     transform:rotateY(180deg);
-
 }
 
-.face{
-
+.front,.back{
     position:absolute;
-
-    inset:0;
-
-    border-radius:14px;
-
+    width:100%;
+    height:100%;
+    border-radius:12px;
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     font-size:2rem;
-
     font-weight:bold;
-
     backface-visibility:hidden;
-
 }
 
 .front{
-
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-
-    border:2px solid rgba(255,255,255,.08);
-
+    background:#2563eb;
 }
 
 .back{
-
     transform:rotateY(180deg);
-
 }
 
-/* Positive cards */
-
-.plus5{
-    background:#15803d;
-}
-
-.plus10{
+.plus{
     background:#16a34a;
 }
 
-.plus20{
-    background:#22c55e;
-}
-
-.plus50{
-    background:#4ade80;
-    color:#111827;
-}
-
-.plus100{
-    background:#a3e635;
-    color:black;
-    box-shadow:0 0 18px #84cc16;
-}
-
-/* Negative */
-
-.minus5{
-    background:#991b1b;
-}
-
-.minus10{
-    background:#b91c1c;
-}
-
-.minus20{
+.minus{
     background:#dc2626;
 }
 
-.minus50{
-    background:#ef4444;
-}
-
-/* Specials */
-
-.double{
-
-    background:#7c3aed;
-
-}
-
-.half{
-
-    background:#f59e0b;
-    color:black;
-
-}
-
-.bomb{
-
-    background:black;
-
-    color:#ef4444;
-
-    box-shadow:0 0 20px red;
-
-}
-
-/* Jackpot */
-
-@keyframes jackpot{
-
-    0%{
-
-        filter:hue-rotate(0deg);
-
-        box-shadow:0 0 10px gold;
-
-    }
-
-    50%{
-
-        transform:rotateY(180deg) scale(1.05);
-
-        box-shadow:0 0 35px gold;
-
-    }
-
-    100%{
-
-        filter:hue-rotate(30deg);
-
-        box-shadow:0 0 15px gold;
-
-    }
-
+@keyframes rainbow{
+    from{filter:hue-rotate(0deg);}
+    to{filter:hue-rotate(360deg);}
 }
 
 .jackpot{
+    animation: rainbow 2s linear infinite;
+    color: white;
+    text-shadow:
+        0 0 8px white,
+        0 0 20px gold,
+        0 0 40px hotpink;
+}
 
-    background:linear-gradient(
-        45deg,
-        gold,
-        #fff4a3,
-        gold
-    );
+.controls{
+    display:flex;
+    gap:15px;
+    margin-bottom:20px;
+}
 
-    color:black;
+button{
+    padding:12px 22px;
+    font-size:1rem;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
 
-    animation:jackpot 1.5s infinite;
+.bank{
+    background:#16a34a;
+    color:white;
+}
 
+.restart{
+    background:#2563eb;
+    color:white;
+}
+
+button:hover{
+    opacity:.9;
 }
 
 .message{
-
-    margin-top:30px;
-
+    font-size:1.2rem;
+    min-height:30px;
     text-align:center;
-
-    font-size:1.3rem;
-
-    color:#d1d5db;
-
-    min-height:35px;
-
 }
-
-@media(max-width:700px){
-
-.grid{
-
-grid-template-columns:repeat(2,1fr);
-
-}
-
-.card{
-
-height:140px;
-
-}
-
-h1{
-
-font-size:2.2rem;
-
-}
-
-}
-
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
-
 <h1>🃏 Card Flip</h1>
 
-<div class="subtitle">
-
-Flip cards... but know when to stop.
-
+<div class="score">
+Score: <span id="score">0</span>
 </div>
 
-<div class="stats">
-
-<div class="panel">
-
-<h2>Current Score</h2>
-
-<div id="score" class="value">0</div>
-
+<div class="controls">
+<button class="bank" onclick="bank()">💰 Bank Score</button>
+<button class="restart" onclick="newGame()">🔄 New Game</button>
+<button onclick="newBoard()">🎴 New Board</button>
 </div>
 
-<div class="panel">
+<div class="grid" id="grid"></div>
 
-<h2>High Score</h2>
-
-<div id="highScore" class="value">0</div>
-
-</div>
-
-</div>
-
-<div class="buttons">
-
-<button class="bank" onclick="bankScore()">
-💰 Bank Score
-</button>
-
-<button class="deal" onclick="dealNewCards()">
-🃏 Deal New Cards
-</button>
-
-<button class="reset" onclick="newGame()">
-🔄 New Game
-</button>
-
-</div>
-
-<div id="grid" class="grid"></div>
-
-<div id="message" class="message">
-
-Choose your first card...
-
-</div>
-
+<div class="message" id="message">
+Flip a card... or bank your points!
 </div>
 
 <script>
 
-/*
+function newBoard(){
 
-PART 2 STARTS HERE
+    if(gameOver) return;
 
-*/
+    createCards();
+
+    message.textContent="Fresh board! Your score carries over.";
+
+}
+
+function randomCard(){
+
+    const roll = Math.random();
+
+    // 0.5%
+    if(roll < 0.005) return "jackpot";
+
+    // 2%
+    if(roll < 0.025) return "bomb";
+
+    // 4%
+    if(roll < 0.065) return "double";
+
+    // 4%
+    if(roll < 0.105) return "half";
+
+    // 5%
+    if(roll < 0.155) return 100;
+
+    // Regular cards
+    const regular=[
+        5,5,5,5,
+        10,10,10,
+        20,20,
+        50,
+        -5,-5,-5,-5,
+        -10,-10,
+        -20,
+        -50
+    ];
+
+    return regular[Math.floor(Math.random()*regular.length)];
+}
+
+function createDeck(){
+    const deck=[];
+    while(deck.length<16){
+        deck.push(randomCard());
+    }
+    shuffle(deck);
+    return deck;
+}
+
+let score = 0;
+let gameOver = false;
+
+const grid = document.getElementById("grid");
+const scoreText = document.getElementById("score");
+const message = document.getElementById("message");
+
+function shuffle(array){
+    for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i],array[j]]=[array[j],array[i]];
+    }
+}
+
+function getCardColor(value){
+
+    switch(value){
+
+        case 5: return "#22c55e";
+        case 10: return "#34d399";
+        case 20: return "#4ade80";
+        case 50: return "#84cc16";
+        case 100: return "#fde047";
+
+        case "jackpot":
+            return "linear-gradient(135deg,#ff0080,#ff8c00,#ffee00,#00ff99,#00ccff,#7c3aed)";
+
+        case -5: return "#fca5a5";
+        case -10: return "#ef4444";
+        case -20: return "#dc2626";
+        case -50: return "#991b1b";
+
+        case "double": return "#9333ea";
+        case "half": return "#f59e0b";
+        case "bomb": return "#111827";
+    }
+
+}
+
+function createCards(){
+
+    grid.innerHTML="";
+
+    const values=createDeck();
+
+    values.forEach(value=>{
+
+        const card=document.createElement("div");
+        card.className="card";
+
+        const inner=document.createElement("div");
+        inner.className="inner";
+
+        const front=document.createElement("div");
+        front.className="front";
+        front.innerHTML="?";
+
+        const back=document.createElement("div");
+        back.className="back";
+        if(value==="double"){
+            back.innerHTML="x2";
+        }
+        else if(value==="half"){
+            back.innerHTML="½";
+        }
+        else if(value==="bomb"){
+            back.innerHTML="💣<br>you lose";
+        }
+        else if(value==="jackpot"){
+            back.innerHTML="💎<br>+777";
+        }
+        else{
+            back.innerHTML=(value>0?"+":"")+value;
+        }
+
+        if(value==="double"){
+            back.style.background="#337ef5"; // blue
+        }
+        else if(value==="half"){
+            back.style.background="#f59433"; // gold
+        }
+        else if(value==="bomb"){
+            back.style.background="#111";
+            back.style.color="#ef4444";
+        }
+        else{
+            const color = getCardColor(value);
+
+        if (color.startsWith("linear-gradient")) {
+            back.style.background = color;
+            back.classList.add("jackpot");
+        } else {
+            back.style.background = color;
+        }
+        }
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+
+        card.appendChild(inner);
+
+        card.onclick=()=>{
+
+            if(gameOver) return;
+            if(card.classList.contains("flipped")) return;
+
+            card.classList.add("flipped");
+
+            if(value==="double"){
+
+            score*=2;
+
+        }
+        else if(value==="half"){
+
+            score=Math.floor(score/2);
+
+        }
+        else if(value==="bomb"){
+
+            score=0;
+            gameOver=true;
+            message.textContent="💣 BOOM! You lost everything!";
+
+        }
+        else if(value==="jackpot"){
+            score+=777;
+        }
+            
+        else{
+
+            score+=value;
+
+            if(score<0){
+                score=0;
+            }
+
+        }
+
+        scoreText.textContent=score;
+
+            if([...document.querySelectorAll(".card")].every(c=>c.classList.contains("flipped"))){
+                gameOver=true;
+                message.textContent="All cards flipped! Final score: "+score;
+            }
+
+        }
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+function bank(){
+
+    if(gameOver) return;
+
+    gameOver=true;
+
+    message.textContent="You banked "+score+" points!";
+
+}
+
+function newGame(){
+
+    score=0;
+    gameOver=false;
+    scoreText.textContent=0;
+    message.textContent="Flip a card... or bank your points!";
+
+    createCards();
+
+}
+
+createCards();
 
 </script>
 
