@@ -287,7 +287,7 @@ function getBucketColor(multiplier) {
 }
 
 function initBoard() {
-    numRows = 16;
+    numRows = parseInt(document.getElementById('rowSelect').value);
     multipliers = MULTIPLIER_PRESETS[numRows];
 
     pegs = [];
@@ -298,7 +298,7 @@ function initBoard() {
     const startX = canvas.width / 2;
 
     // Generate pyramid pegs
-    for (let r = 0; r < numRows; r++) {
+    for (let r = 0; r < 16; r++) {
         const pegsInRow = r + 3;
         const rowWidth = (pegsInRow - 1) * spacingY;
         const rowStartX = startX - rowWidth / 2;
