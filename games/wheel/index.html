@@ -28,8 +28,8 @@
 
     .wheel-container {
       position: relative;
-      width: 360px;
-      height: 360px;
+      width: 420px;
+      height: 420px;
     }
 
     /* Top Marker/Pointer */
@@ -85,6 +85,7 @@
       font-weight: bold;
       height: 30px;
       color: #ffa502;
+      text-align: center;
     }
   </style>
 </head>
@@ -94,7 +95,7 @@
 
   <div class="wheel-container">
     <div class="pointer"></div>
-    <canvas id="wheel" width="400" height="400"></canvas>
+    <canvas id="wheel" width="500" height="500"></canvas>
   </div>
 
   <button id="spinBtn">SPIN</button>
@@ -106,40 +107,57 @@
     const spinBtn = document.getElementById('spinBtn');
     const resultDiv = document.getElementById('result');
 
-    // Customize your segments and colors here
-    const options = ['Option 1', 'Option 2', 'Option 3', 'Option 4', 'Option 5', 'Option 6'];
-    const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#1dd1a1', '#ff9ff3', '#54a0ff'];
+    // Prize Configuration with Rarity-based Themes
+    const prizes = [
+      { label: '💎 +50', color: '#888888', rarity: 'Common' },
+      { label: '💎 +75', color: '#777777', rarity: 'Common' },
+      { label: '💎 +100', color: '#888888', rarity: 'Common' },
+      { label: '💎 +150', color: '#777777', rarity: 'Common' },
+      { label: '💎 +250', color: '#2ed573', rarity: 'Uncommon' },
+      { label: '💎 +500', color: '#1e90ff', rarity: 'Rare' },
+      { label: '⭐ +1000', color: '#a55eea', rarity: 'Epic' },
+      { label: '💥 Lose 50', color: '#ff4757', rarity: 'Uncommon' },
+      { label: '❌ Nothing', color: '#57606f', rarity: 'Common' },
+      { label: '🎁 Free Spin', color: '#1e90ff', rarity: 'Rare' },
+      { label: '💎 ×2 Gems', color: '#ff7f50', rarity: 'Very Rare' },
+      { label: '👑 JACKPOT +5000', color: '#ffa502', rarity: 'Ultra Rare' }
+    ];
 
-    const numSegments = options.length;
+    const numSegments = prizes.length;
     const arcSize = (2 * Math.PI) / numSegments;
     const radius = canvas.width / 2;
 
     let currentAngle = 0;
     let isSpinning = false;
 
-    // Draw the initial wheel
+    // Draw Wheel
     function drawWheel() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < numSegments; i++) {
         const angle = currentAngle + i * arcSize;
         
-        // Draw slice
+        // Draw Slice
         ctx.beginPath();
-        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillStyle = prizes[i].color;
         ctx.moveTo(radius, radius);
         ctx.arc(radius, radius, radius, angle, angle + arcSize);
         ctx.lineTo(radius, radius);
         ctx.fill();
 
-        // Draw text
+        // Slice Border
+        ctx.strokeStyle = '#1e1e2f';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw Text
         ctx.save();
         ctx.translate(radius, radius);
         ctx.rotate(angle + arcSize / 2);
         ctx.textAlign = 'right';
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText(options[i], radius - 20, 6);
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(prizes[i].label, radius - 15, 5);
         ctx.restore();
       }
     }
@@ -151,12 +169,11 @@
       spinBtn.disabled = true;
       resultDiv.textContent = '';
 
-      // Set random rotations (between 5 and 10 full spins + random target angle)
       const extraSpins = 5 + Math.floor(Math.random() * 5);
       const randomStopAngle = Math.random() * 2 * Math.PI;
       const totalRotation = extraSpins * 2 * Math.PI + randomStopAngle;
 
-      const duration = 4000; // 4 seconds spin time
+      const duration = 4500; // 4.5 seconds
       const startTime = performance.now();
       const startAngle = currentAngle;
 
@@ -164,8 +181,8 @@
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Cubic ease-out formula for smooth deceleration
-        const easeOut = 1 - Math.pow(1 - progress, 3);
+        // Exponential ease-out for smooth stopping animation
+        const easeOut = 1 - Math.pow(1 - progress, 4);
         currentAngle = startAngle + totalRotation * easeOut;
 
         drawWheel();
@@ -183,16 +200,13 @@
     }
 
     function determineWinner() {
-      // Normalize angle between 0 and 2*PI
       const normalizedAngle = currentAngle % (2 * Math.PI);
+      const pointerAngle = (3 * Math.PI) / 2; // Top position
       
-      // Pointer is at the top (3*PI / 2 radians or 270 degrees)
-      const pointerAngle = (3 * Math.PI) / 2;
-      
-      // Calculate winning index relative to the top pointer
       let winningIndex = Math.floor((2 * Math.PI + pointerAngle - normalizedAngle) % (2 * Math.PI) / arcSize);
-      
-      resultDiv.textContent = `🎉 You won: ${options[winningIndex]}!`;
+      const prize = prizes[winningIndex];
+
+      resultDiv.textContent = `🎉 You landed on: ${prize.label} (${prize.rarity})!`;
     }
 
     // Initial Render
