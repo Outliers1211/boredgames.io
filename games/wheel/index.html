@@ -222,7 +222,7 @@
     <canvas id="wheel" width="500" height="500"></canvas>
   </div>
 
-  <button id="spinBtn">SPIN (100💎)</button>
+  <button id="spinBtn">SPIN (200💎)</button>
   <div id="result"></div>
 
   <script>
@@ -404,8 +404,8 @@
     function spin() {
       if (isSpinning) return;
 
-      if (!spendGems(100)) {
-        resultDiv.textContent = "❌ Need 100💎";
+      if (!spendGems(200)) {
+        resultDiv.textContent = "❌ Need 200💎";
         return;
       }
 
@@ -486,8 +486,8 @@
               break;
             case 9:
               // Free spin payout
-              addGems(100);
-              triggerBluePopup("🎁 Free Spin (+100💎)!");
+              addGems(200);
+              triggerBluePopup("🎁 Free Spin (+200💎)!");
               break;
             case 10:
               addGems(gems);
