@@ -119,6 +119,7 @@ window.addEventListener("load", () => {
 
 });
 
+
 function gemPopup(amount){
 
     const popup = document.createElement("div");
