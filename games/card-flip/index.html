@@ -227,8 +227,8 @@ Score: <span id="score">0</span>
 
 <div class="controls">
 <button class="bank" onclick="bank()">💰 Bank Score</button>
-<button class="restart" onclick="newGame()">🔄 New Game</button>
-<button onclick="newBoard()">🎴 New Board</button>
+<button class="restart" onclick="newGame()">New Game 💎150</button>
+<button onclick="newBoard()">New Board 💎10</button>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -260,6 +260,7 @@ function newBoard(){
 
     boardLocked = true;
     grid.style.pointerEvents = "none";
+    spendGems(10);
 
     revealRemainingCards();
 
@@ -556,6 +557,7 @@ function newGame(){
     gameOver=false;
     scoreText.textContent=0;
     message.textContent="Flip a card... or bank your points!";
+    spendGems(150);
 
     createCards();
 
