@@ -150,14 +150,14 @@ function createDeck(){
 
     // Regular cards
     const regular=[
-        5,5,5,
+        5,5,5,5,
         10,10,10,
         20,20,
         50,
 
         -5,-5,-5,
-        -10,-10,-10,
-        -20,-20,
+        -10,-10,
+        -20,
         -50
     ];
 
@@ -227,23 +227,23 @@ function createCards(){
         const back=document.createElement("div");
         back.className="back";
         if(value==="double"){
-            back.innerHTML="✖️2";
+            back.innerHTML="x2";
         }
         else if(value==="half"){
             back.innerHTML="½";
         }
         else if(value==="bomb"){
-            back.innerHTML="💣";
+            back.innerHTML="💣 you lose";
         }
         else{
             back.innerHTML=(value>0?"+":"")+value;
         }
 
         if(value==="double"){
-            back.style.background="#9333ea"; // purple
+            back.style.background="#337ef5"; // blue
         }
         else if(value==="half"){
-            back.style.background="#f59e0b"; // gold
+            back.style.background="#f59433"; // gold
         }
         else if(value==="bomb"){
             back.style.background="#111";
