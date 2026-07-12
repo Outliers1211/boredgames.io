@@ -286,7 +286,7 @@ function getCardColor(value){
         case -20: return "#f73939";
         case -50: return "#9e0606";
 
-        case "double": return "#11e6ed";
+        case "double": return "#deb214";
         case "half": return "#fcca00";
         case "bomb": return "#290103";
     }
@@ -315,6 +315,7 @@ function createCards(){
         back.className="back";
         if(value==="double"){
             back.innerHTML="x2";
+            back.classList.add("gold-card");
         }
         else if(value==="half"){
             back.innerHTML="½";
