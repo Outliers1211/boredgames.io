@@ -216,7 +216,7 @@
     </div>
 
     <!-- Start State -->
-    <button id="startBtn">START RUN (100💎)</button>
+    <button id="startBtn">START RUN (50💎)</button>
 
     <!-- Playing State (Hidden initially) -->
     <div id="playControls" class="btn-group" style="display: none;">
@@ -337,11 +337,11 @@
 
     // --- GAME ACTIONS ---
     function startRun() {
-      // Attempt to spend 100 gems
+      // Attempt to spend 50 gems
       if (typeof spendGems === 'function') {
-        if (!spendGems(100)) {
+        if (!spendGems(50)) {
           statusMsg.className = 'lose-text';
-          statusMsg.textContent = "❌ Need 100💎 to play!";
+          statusMsg.textContent = "❌ Need 50💎 to play!";
           return;
         }
       }
