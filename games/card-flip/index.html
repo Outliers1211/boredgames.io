@@ -144,10 +144,53 @@ Flip a card... or bank your points!
 
 <script>
 
-const values = [
-50,50,20,20,10,10,5,5,
--5,-5,-10,-10,-20,-20,-50,-50
-];
+function createDeck(){
+
+    const deck=[];
+
+    // Regular cards
+    const regular=[
+        5,5,5,
+        10,10,10,
+        20,20,
+        50,
+
+        -5,-5,-5,
+        -10,-10,-10,
+        -20,-20,
+        -50
+    ];
+
+    while(deck.length<16){
+
+        // 4% chance Bomb
+        if(Math.random()<0.04){
+            deck.push("bomb");
+            continue;
+        }
+
+        // 8% chance x2
+        if(Math.random()<0.08){
+            deck.push("double");
+            continue;
+        }
+
+        // 8% chance /2
+        if(Math.random()<0.08){
+            deck.push("half");
+            continue;
+        }
+
+        deck.push(
+            regular[Math.floor(Math.random()*regular.length)]
+        );
+    }
+
+    shuffle(deck);
+
+    return deck;
+
+}
 
 let score = 0;
 let gameOver = false;
@@ -167,7 +210,7 @@ function createCards(){
 
     grid.innerHTML="";
 
-    shuffle(values);
+    const values=createDeck();
 
     values.forEach(value=>{
 
@@ -183,9 +226,32 @@ function createCards(){
 
         const back=document.createElement("div");
         back.className="back";
-        back.innerHTML=(value>0?"+":"")+value;
+        if(value==="double"){
+            back.innerHTML="✖️2";
+        }
+        else if(value==="half"){
+            back.innerHTML="½";
+        }
+        else if(value==="bomb"){
+            back.innerHTML="💣";
+        }
+        else{
+            back.innerHTML=(value>0?"+":"")+value;
+        }
 
-        back.classList.add(value>0?"plus":"minus");
+        if(value==="double"){
+            back.style.background="#9333ea"; // purple
+        }
+        else if(value==="half"){
+            back.style.background="#f59e0b"; // gold
+        }
+        else if(value==="bomb"){
+            back.style.background="#111";
+            back.style.color="#ef4444";
+        }
+        else{
+            back.classList.add(value>0?"plus":"minus");
+        }
 
         inner.appendChild(front);
         inner.appendChild(back);
@@ -199,13 +265,34 @@ function createCards(){
 
             card.classList.add("flipped");
 
+            if(value==="double"){
+
+            score*=2;
+
+        }
+        else if(value==="half"){
+
+            score=Math.floor(score/2);
+
+        }
+        else if(value==="bomb"){
+
+            score=0;
+            gameOver=true;
+            message.textContent="💣 BOOM! You lost everything!";
+
+        }
+        else{
+
             score+=value;
-            scoreText.textContent=score;
 
             if(score<0){
                 score=0;
-                scoreText.textContent=0;
             }
+
+        }
+
+        scoreText.textContent=score;
 
             if([...document.querySelectorAll(".card")].every(c=>c.classList.contains("flipped"))){
                 gameOver=true;
