@@ -199,9 +199,17 @@ function newBoard(){
 
     if(gameOver) return;
 
-    createCards();
+    revealRemainingCards();
 
-    message.textContent="Fresh board! Your score carries over.";
+    message.textContent = "🎴 Revealing remaining cards...";
+
+    setTimeout(()=>{
+
+        createCards();
+
+        message.textContent = "Fresh board! Your score carries over.";
+
+    },1500);
 
 }
 
@@ -386,9 +394,13 @@ function createCards(){
         else if(value==="bomb"){
 
             score=0;
-            gameOver=true;
-            message.textContent="💣 BOOM! You lost everything!";
+            
+            gameOver = true;
 
+            revealRemainingCards();
+
+            message.textContent = "💣 BOOM! You lost everything!";
+    
         }
             
         else if(value==="jackpot1"){
@@ -419,13 +431,23 @@ function createCards(){
 
 }
 
+function revealRemainingCards(){
+
+    document.querySelectorAll(".card").forEach(card=>{
+        card.classList.add("flipped");
+    });
+
+}
+
 function bank(){
 
     if(gameOver) return;
 
-    gameOver=true;
+    revealRemainingCards();
 
-    message.textContent="You banked "+score+" points!";
+    gameOver = true;
+
+    message.textContent = "💰 You banked " + score + " points!";
 
 }
 
