@@ -67,7 +67,7 @@ h1 {
     border-radius: 16px;
     padding: 20px;
     width: 100%;
-    max-width: 480px;
+    max-width: 500px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
@@ -190,16 +190,16 @@ canvas {
             </div>
         </div>
         <div class="input-group">
-            <label for="rowSelect">Rows / Risk:</label>
+            <label for="rowSelect">Risk Level:</label>
             <select id="rowSelect" onchange="initBoard()">
-                <option value="8">8 Rows (Low Risk)</option>
-                <option value="12" selected>12 Rows (Medium Risk)</option>
-                <option value="16">16 Rows (High Risk)</option>
+                <option value="8">Low Risk (8 Active Buckets)</option>
+                <option value="12">Medium Risk (12 Active Buckets)</option>
+                <option value="16" selected>High Risk (16 Active Buckets)</option>
             </select>
         </div>
     </div>
 
-    <canvas id="plinkoCanvas" width="440" height="480"></canvas>
+    <canvas id="plinkoCanvas" width="460" height="520"></canvas>
 
     <button id="dropBtn" class="btn-drop" onclick="dropBall()">Drop Ball 🔴</button>
 
@@ -213,19 +213,23 @@ canvas {
 const canvas = document.getElementById('plinkoCanvas');
 const ctx = canvas.getContext('2d');
 
-let numRows = 12;
+const TOTAL_PEG_ROWS = 16; // Always 16 rows
 let pegs = [];
 let buckets = [];
 let balls = [];
 let multipliers = [];
 
+// Dynamic wall bounds based on peg field
+let minBoardX = 0;
+let maxBoardX = canvas.width;
+
 // Physics parameters
 const GRAVITY = 0.22;
-const RESTITUTION = 0.55; // Bounce elasticity
+const RESTITUTION = 0.5; // Bounce elasticity
 const PEG_RADIUS = 4;
 const BALL_RADIUS = 6;
 
-// Pre-defined multiplier distributions depending on row count
+// Pre-defined multiplier distributions depending on risk level
 const MULTIPLIER_PRESETS = {
     8: [3, 1.7, 1.1, 0.3, 0.1, 0.3, 1.1, 1.7, 3],
     12: [6, 3, 1.4, 0.8, 0.5, 0.2, 0.1, 0.2, 0.5, 0.8, 1.4, 3, 6],
@@ -287,18 +291,18 @@ function getBucketColor(multiplier) {
 }
 
 function initBoard() {
-    numRows = parseInt(document.getElementById('rowSelect').value);
-    multipliers = MULTIPLIER_PRESETS[numRows];
+    const riskSetting = parseInt(document.getElementById('rowSelect').value);
+    multipliers = MULTIPLIER_PRESETS[riskSetting];
 
     pegs = [];
     buckets = [];
 
-    const startY = 50;
-    const spacingY = (canvas.height - 110) / numRows;
+    const startY = 40;
+    const spacingY = (canvas.height - 110) / TOTAL_PEG_ROWS;
     const startX = canvas.width / 2;
 
-    // Generate pyramid pegs
-    for (let r = 0; r < 16; r++) {
+    // Generate ALWAYS 16 peg rows
+    for (let r = 0; r < TOTAL_PEG_ROWS; r++) {
         const pegsInRow = r + 3;
         const rowWidth = (pegsInRow - 1) * spacingY;
         const rowStartX = startX - rowWidth / 2;
@@ -312,16 +316,23 @@ function initBoard() {
         }
     }
 
-    // Generate buckets at the bottom
-    const lastRowPegs = numRows + 2;
+    // Determine outer bounding boundaries based on bottom row pegs
+    const lastRowPegs = TOTAL_PEG_ROWS + 2;
     const lastRowWidth = (lastRowPegs - 1) * spacingY;
-    const bucketStartX = startX - lastRowWidth / 2;
-    const bucketY = startY + numRows * spacingY + 10;
+    minBoardX = startX - lastRowWidth / 2 - 10;
+    maxBoardX = startX + lastRowWidth / 2 + 10;
 
-    for (let b = 0; b < multipliers.length; b++) {
+    // Generate buckets at bottom spanning full 16-row width
+    const bucketY = startY + TOTAL_PEG_ROWS * spacingY + 8;
+    const totalBuckets = multipliers.length;
+    const totalBucketWidth = lastRowWidth;
+    const bucketWidth = totalBucketWidth / totalBuckets;
+    const bucketStartX = startX - totalBucketWidth / 2;
+
+    for (let b = 0; b < totalBuckets; b++) {
         buckets.push({
-            x: bucketStartX + b * spacingY,
-            width: spacingY - 2,
+            x: bucketStartX + b * bucketWidth,
+            width: bucketWidth - 2,
             y: bucketY,
             height: 25,
             mult: multipliers[b]
@@ -343,12 +354,12 @@ function dropBall() {
 
     updateUI();
 
-    // Spawn ball near top center with slight random offset
-    const randomOffset = (Math.random() - 0.5) * 4;
+    // Spawn ball near top center with small random drift
+    const randomOffset = (Math.random() - 0.5) * 3;
     balls.push({
         x: canvas.width / 2 + randomOffset,
-        y: 20,
-        vx: (Math.random() - 0.5) * 0.8,
+        y: 15,
+        vx: (Math.random() - 0.5) * 0.4,
         vy: Math.random() * 0.5,
         bet: betVal
     });
@@ -364,13 +375,13 @@ function updatePhysics() {
         ball.x += ball.vx;
         ball.y += ball.vy;
 
-        // Wall collisions
-        if (ball.x - BALL_RADIUS < 10) {
-            ball.x = 10 + BALL_RADIUS;
-            ball.vx *= -RESTITUTION;
-        } else if (ball.x + BALL_RADIUS > canvas.width - 10) {
-            ball.x = canvas.width - 10 - BALL_RADIUS;
-            ball.vx *= -RESTITUTION;
+        // Wall collisions anchored to the 16-row field boundary
+        if (ball.x - BALL_RADIUS < minBoardX) {
+            ball.x = minBoardX + BALL_RADIUS;
+            ball.vx = Math.abs(ball.vx) * RESTITUTION;
+        } else if (ball.x + BALL_RADIUS > maxBoardX) {
+            ball.x = maxBoardX - BALL_RADIUS;
+            ball.vx = -Math.abs(ball.vx) * RESTITUTION;
         }
 
         // Peg collisions
@@ -380,33 +391,35 @@ function updatePhysics() {
             const dist = Math.hypot(dx, dy);
 
             if (dist < BALL_RADIUS + PEG_RADIUS) {
-                // Collision normal
                 const nx = dx / dist;
                 const ny = dy / dist;
 
-                // Reposition ball outside peg
+                // Move ball out of peg overlap
                 const overlap = (BALL_RADIUS + PEG_RADIUS) - dist;
                 ball.x += nx * overlap;
                 ball.y += ny * overlap;
 
-                // Bounce velocity calculation
+                // Bounce math
                 const dot = ball.vx * nx + ball.vy * ny;
                 ball.vx = (ball.vx - 2 * dot * nx) * RESTITUTION;
                 ball.vy = (ball.vy - 2 * dot * ny) * RESTITUTION;
 
-                // Add small randomness to prevent balls getting stuck
-                ball.vx += (Math.random() - 0.5) * 0.4;
+                // Micro-jitter to ensure clean bounces
+                ball.vx += (Math.random() - 0.5) * 0.3;
 
-                peg.activeTime = 10; // Highlight peg
+                peg.activeTime = 8;
                 playSound('bounce');
             }
         }
 
-        // Check bucket landing
-        const lastBucketY = buckets[0].y;
-        if (ball.y >= lastBucketY) {
-            let landedBucket = buckets.find(b => Math.abs(ball.x - (b.x + b.width / 2)) < b.width / 2);
-            if (!landedBucket) landedBucket = buckets[0]; // Fallback to nearest edge
+        // Check bucket landings
+        if (buckets.length > 0 && ball.y >= buckets[0].y) {
+            let landedBucket = buckets.find(b => ball.x >= b.x && ball.x <= b.x + b.width);
+            
+            // Fallback to closest outer bucket if landed just outside bounds
+            if (!landedBucket) {
+                landedBucket = ball.x < canvas.width / 2 ? buckets[0] : buckets[buckets.length - 1];
+            }
 
             const payout = Math.floor(ball.bet * landedBucket.mult);
 
@@ -435,7 +448,7 @@ function draw() {
         ctx.arc(peg.x, peg.y, PEG_RADIUS, 0, Math.PI * 2);
         ctx.fillStyle = peg.activeTime > 0 ? '#38bdf8' : '#64748b';
         ctx.shadowColor = peg.activeTime > 0 ? '#38bdf8' : 'transparent';
-        ctx.shadowBlur = peg.activeTime > 0 ? 10 : 0;
+        ctx.shadowBlur = peg.activeTime > 0 ? 8 : 0;
         ctx.fill();
         ctx.shadowBlur = 0;
     }
@@ -448,12 +461,12 @@ function draw() {
         ctx.fill();
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px Arial';
+        ctx.font = 'bold 9px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(`${bucket.mult}x`, bucket.x + bucket.width / 2, bucket.y + 16);
     }
 
-    // Draw balls
+    // Draw active balls
     for (let ball of balls) {
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
@@ -471,7 +484,7 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Initialization
+// Initialize
 initBoard();
 updateUI();
 gameLoop();
