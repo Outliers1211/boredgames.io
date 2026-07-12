@@ -5,13 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Card Flip</title>
 
-<div id="currencyBar">
-    <span class="gemIcon">💎</span>
-    <span id="gemCount">0</span>
-</div>
-
-<script src="currency.js"></script>
-
 <style>
 #currencyBar{
     position:fixed;
@@ -222,6 +215,11 @@ button:hover{
 <body>
 
 <h1>🃏 Card Flip</h1>
+
+<div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">0</span>
+</div>
 
 <div class="score">
 Score: <span id="score">0</span>
@@ -564,6 +562,8 @@ function newGame(){
 createCards();
 
 </script>
+
+<script src="../../currency.js"></script>
 
 </body>
 </html>
