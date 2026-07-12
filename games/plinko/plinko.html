@@ -192,9 +192,9 @@ canvas {
         <div class="input-group">
             <label for="rowSelect">Risk Level:</label>
             <select id="rowSelect" onchange="initBoard()">
-                <option value="8">Low Risk (8 Active Buckets)</option>
-                <option value="12">Medium Risk (12 Active Buckets)</option>
-                <option value="16" selected>High Risk (16 Active Buckets)</option>
+                <option value="8">Low Risk (8 Multipliers)</option>
+                <option value="12">Medium Risk (12 Multipliers)</option>
+                <option value="16" selected>High Risk (16 Multipliers)</option>
             </select>
         </div>
     </div>
@@ -213,30 +213,26 @@ canvas {
 const canvas = document.getElementById('plinkoCanvas');
 const ctx = canvas.getContext('2d');
 
-const TOTAL_PEG_ROWS = 16; // Always 16 rows
+const TOTAL_PEG_ROWS = 16;
 let pegs = [];
 let buckets = [];
 let balls = [];
 let multipliers = [];
 
-// Dynamic wall bounds based on peg field
 let minBoardX = 0;
 let maxBoardX = canvas.width;
 
-// Physics parameters
 const GRAVITY = 0.22;
-const RESTITUTION = 0.5; // Bounce elasticity
+const RESTITUTION = 0.5;
 const PEG_RADIUS = 4;
 const BALL_RADIUS = 6;
 
-// Pre-defined multiplier distributions depending on risk level
 const MULTIPLIER_PRESETS = {
     8: [3, 1.7, 1.1, 0.3, 0.1, 0.3, 1.1, 1.7, 3],
     12: [6, 3, 1.4, 0.8, 0.5, 0.2, 0.1, 0.2, 0.5, 0.8, 1.4, 3, 6],
     16: [30, 12, 5, 2, 1.2, 0.7, 0.3, 0.1, 0, 0.1, 0.3, 0.7, 1.2, 2, 5, 12, 30]
 };
 
-// Web Audio API Sound Effects
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
@@ -283,11 +279,11 @@ function setBetFraction(factor) {
 }
 
 function getBucketColor(multiplier) {
-    if (multiplier >= 20) return '#ef4444'; // Bright Red
-    if (multiplier >= 5) return '#f97316';  // Orange
-    if (multiplier >= 1.5) return '#eab308';// Yellow
-    if (multiplier >= 1) return '#22c55e';  // Green
-    return '#3b82f6';                       // Blue (below 1x)
+    if (multiplier >= 20) return '#ef4444';
+    if (multiplier >= 5) return '#f97316';
+    if (multiplier >= 1.5) return '#eab308';
+    if (multiplier >= 1) return '#22c55e';
+    return '#3b82f6';
 }
 
 function initBoard() {
@@ -301,7 +297,6 @@ function initBoard() {
     const spacingY = (canvas.height - 110) / TOTAL_PEG_ROWS;
     const startX = canvas.width / 2;
 
-    // Generate ALWAYS 16 peg rows
     for (let r = 0; r < TOTAL_PEG_ROWS; r++) {
         const pegsInRow = r + 3;
         const rowWidth = (pegsInRow - 1) * spacingY;
@@ -316,25 +311,25 @@ function initBoard() {
         }
     }
 
-    // Determine outer bounding boundaries based on bottom row pegs
+    // Get bottom peg row positions to map buckets precisely
     const lastRowPegs = TOTAL_PEG_ROWS + 2;
     const lastRowWidth = (lastRowPegs - 1) * spacingY;
-    minBoardX = startX - lastRowWidth / 2 - 10;
-    maxBoardX = startX + lastRowWidth / 2 + 10;
+    const bottomRowStartX = startX - lastRowWidth / 2;
+    
+    minBoardX = bottomRowStartX - 5;
+    maxBoardX = startX + lastRowWidth / 2 + 5;
 
-    // Generate buckets at bottom spanning full 16-row width
-    const bucketY = startY + TOTAL_PEG_ROWS * spacingY + 8;
+    const bucketY = startY + TOTAL_PEG_ROWS * spacingY + 4;
     const totalBuckets = multipliers.length;
-    const totalBucketWidth = lastRowWidth;
-    const bucketWidth = totalBucketWidth / totalBuckets;
-    const bucketStartX = startX - totalBucketWidth / 2;
+    const bucketWidth = lastRowWidth / totalBuckets;
 
     for (let b = 0; b < totalBuckets; b++) {
+        const bX = bottomRowStartX + b * bucketWidth;
         buckets.push({
-            x: bucketStartX + b * bucketWidth,
-            width: bucketWidth - 2,
+            x: bX,
+            width: bucketWidth - 1,
             y: bucketY,
-            height: 25,
+            height: 28,
             mult: multipliers[b]
         });
     }
@@ -354,8 +349,7 @@ function dropBall() {
 
     updateUI();
 
-    // Spawn ball near top center with small random drift
-    const randomOffset = (Math.random() - 0.5) * 3;
+    const randomOffset = (Math.random() - 0.5) * 2;
     balls.push({
         x: canvas.width / 2 + randomOffset,
         y: 15,
@@ -375,7 +369,7 @@ function updatePhysics() {
         ball.x += ball.vx;
         ball.y += ball.vy;
 
-        // Wall collisions anchored to the 16-row field boundary
+        // Outer field bounding walls
         if (ball.x - BALL_RADIUS < minBoardX) {
             ball.x = minBoardX + BALL_RADIUS;
             ball.vx = Math.abs(ball.vx) * RESTITUTION;
@@ -394,17 +388,14 @@ function updatePhysics() {
                 const nx = dx / dist;
                 const ny = dy / dist;
 
-                // Move ball out of peg overlap
                 const overlap = (BALL_RADIUS + PEG_RADIUS) - dist;
                 ball.x += nx * overlap;
                 ball.y += ny * overlap;
 
-                // Bounce math
                 const dot = ball.vx * nx + ball.vy * ny;
                 ball.vx = (ball.vx - 2 * dot * nx) * RESTITUTION;
                 ball.vy = (ball.vy - 2 * dot * ny) * RESTITUTION;
 
-                // Micro-jitter to ensure clean bounces
                 ball.vx += (Math.random() - 0.5) * 0.3;
 
                 peg.activeTime = 8;
@@ -412,13 +403,15 @@ function updatePhysics() {
             }
         }
 
-        // Check bucket landings
-        if (buckets.length > 0 && ball.y >= buckets[0].y) {
-            let landedBucket = buckets.find(b => ball.x >= b.x && ball.x <= b.x + b.width);
+        // Exact Bucket Landing Detection
+        if (buckets.length > 0 && ball.y + BALL_RADIUS >= buckets[0].y) {
+            // Find bucket exact X boundary
+            let landedBucket = buckets.find(b => ball.x >= b.x && ball.x < (b.x + b.width + 1));
             
-            // Fallback to closest outer bucket if landed just outside bounds
+            // Outer clamping fallback if outside edge
             if (!landedBucket) {
-                landedBucket = ball.x < canvas.width / 2 ? buckets[0] : buckets[buckets.length - 1];
+                if (ball.x < buckets[0].x) landedBucket = buckets[0];
+                else landedBucket = buckets[buckets.length - 1];
             }
 
             const payout = Math.floor(ball.bet * landedBucket.mult);
@@ -435,7 +428,6 @@ function updatePhysics() {
         }
     }
 
-    // Decay peg highlight counters
     pegs.forEach(p => { if (p.activeTime > 0) p.activeTime--; });
 }
 
@@ -463,7 +455,7 @@ function draw() {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 9px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`${bucket.mult}x`, bucket.x + bucket.width / 2, bucket.y + 16);
+        ctx.fillText(`${bucket.mult}x`, bucket.x + bucket.width / 2, bucket.y + 17);
     }
 
     // Draw active balls
@@ -484,7 +476,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Initialize
 initBoard();
 updateUI();
 gameLoop();
