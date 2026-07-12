@@ -42,7 +42,7 @@ function messageBox(title, text){
 // First-time player bonus
 if(localStorage.getItem("gems") === null){
 
-    localStorage.setItem("gems", 5000);
+    localStorage.setItem("gems", 2000);
     localStorage.setItem("starterBonus", "true");
 
 }
@@ -151,11 +151,11 @@ window.addEventListener("load", () => {
     // Show the starter reward popup only once
     if(localStorage.getItem("starterBonus") === "true"){
 
-        gemPopup(5000);
+        gemPopup(2000);
 
         messageBox(
             "🎉 Welcome!",
-            "You received <b>5,000 💎 Starter Gems!</b><br>Have fun exploring the arcade!"
+            "You received <b>2,000 💎 Starter Gems!</b><br>Have fun exploring the arcade!"
         );
 
         localStorage.removeItem("starterBonus");
