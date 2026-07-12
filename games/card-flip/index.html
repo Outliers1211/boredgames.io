@@ -553,17 +553,23 @@ function bank(){
 
 function newGame(){
 
-    score=0;
-    gameOver=false;
-    scoreText.textContent=0;
-    message.textContent="Flip a card... or bank your points!";
-    spendGems(150);
+    if(!spendGems(150)){
+
+        message.textContent = "❌ You need 150 💎 to play!";
+        return;
+
+    }
+
+    score = 0;
+    gameOver = false;
+    scoreText.textContent = 0;
+    message.textContent = "Flip a card... or bank your points!";
 
     createCards();
 
 }
 
-createCards();
+//createCards();
 
 </script>
 
