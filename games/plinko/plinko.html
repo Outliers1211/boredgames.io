@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plinko</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: #0f172a;
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 15px;
+}
+
+#currencyBar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(30, 41, 59, 0.95);
+    border: 2px solid #38bdf8;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    font-size: 1.2rem;
+    font-weight: bold;
+    z-index: 100;
+}
+
+.gemIcon {
+    font-size: 1.4rem;
+    animation: gemFloat 2s ease-in-out infinite;
+}
+
+@keyframes gemFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+h1 {
+    margin-bottom: 5px;
+    color: #f8fafc;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.sub-header {
+    color: #94a3b8;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+}
+
+.game-container {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.controls-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #0f172a;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.input-group label {
+    font-weight: bold;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.bet-inputs {
+    display: flex;
+    gap: 6px;
+}
+
+input[type="number"] {
+    width: 90px;
+    padding: 8px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.btn-small {
+    padding: 6px 10px;
+    background: #334155;
+    border: none;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-small:hover { background: #475569; }
+
+select {
+    padding: 8px 12px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+canvas {
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    max-width: 100%;
+}
+
+.btn-drop {
+    width: 100%;
+    padding: 14px;
+    background: #10b981;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-drop:hover { background: #059669; }
+.btn-drop:active { transform: scale(0.98); }
+
+.status-box {
+    text-align: center;
+    min-height: 24px;
+    font-weight: bold;
+    color: #cbd5e1;
+}
+</style>
+</head>
+
+<body>
+
+<div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">0</span>
+</div>
+
+<h1>🟢 Plinko</h1>
+<p class="sub-header">Drop the ball, hit the pegs, and land high multipliers!</p>
+
+<div class="game-container">
+    <div class="controls-panel">
+        <div class="input-group">
+            <label for="betInput">Bet Amount:</label>
+            <div class="bet-inputs">
+                <input type="number" id="betInput" value="50" min="10" step="10">
+                <button class="btn-small" onclick="setBetFraction(0.5)">½</button>
+                <button class="btn-small" onclick="setBetFraction(2)">2x</button>
+            </div>
+        </div>
+        <div class="input-group">
+            <label for="rowSelect">Rows / Risk:</label>
+            <select id="rowSelect" onchange="initBoard()">
+                <option value="8">8 Rows (Low Risk)</option>
+                <option value="12" selected>12 Rows (Medium Risk)</option>
+                <option value="16">16 Rows (High Risk)</option>
+            </select>
+        </div>
+    </div>
+
+    <canvas id="plinkoCanvas" width="440" height="480"></canvas>
+
+    <button id="dropBtn" class="btn-drop" onclick="dropBall()">Drop Ball 🔴</button>
+
+    <div class="status-box" id="statusBox">Set your bet and click Drop!</div>
+</div>
+
+<!-- currency.js provides spendGems(), addGems(), and getGems() -->
+<script src="../../currency.js"></script>
+
+<script>
+const canvas = document.getElementById('plinkoCanvas');
+const ctx = canvas.getContext('2d');
+
+let numRows = 12;
+let pegs = [];
+let buckets = [];
+let balls = [];
+let multipliers = [];
+
+// Physics parameters
+const GRAVITY = 0.22;
+const RESTITUTION = 0.55; // Bounce elasticity
+const PEG_RADIUS = 4;
+const BALL_RADIUS = 6;
+
+// Pre-defined multiplier distributions depending on row count
+const MULTIPLIER_PRESETS = {
+    8: [13, 3, 1.3, 0.7, 0.4, 0.7, 1.3, 3, 13],
+    12: [33, 11, 4, 1.6, 0.8, 0.5, 0.3, 0.5, 0.8, 1.6, 4, 11, 33],
+    16: [110, 41, 10, 5, 2, 1.2, 0.6, 0.3, 0.2, 0.3, 0.6, 1.2, 2, 5, 10, 41, 110]
+};
+
+// Web Audio API Sound Effects
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'bounce') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600 + Math.random() * 200, now);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+    } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+}
+
+function updateUI() {
+    if (typeof getGems === "function") {
+        const gemCountEl = document.getElementById('gemCount');
+        if (gemCountEl) gemCountEl.textContent = getGems();
+    }
+}
+
+function setBetFraction(factor) {
+    const input = document.getElementById('betInput');
+    let newBet = Math.floor(parseInt(input.value) * factor);
+    if (newBet < 10) newBet = 10;
+    input.value = newBet;
+}
+
+function getBucketColor(multiplier) {
+    if (multiplier >= 20) return '#ef4444'; // Bright Red
+    if (multiplier >= 5) return '#f97316';  // Orange
+    if (multiplier >= 1.5) return '#eab308';// Yellow
+    if (multiplier >= 1) return '#22c55e';  // Green
+    return '#3b82f6';                       // Blue (below 1x)
+}
+
+function initBoard() {
+    numRows = parseInt(document.getElementById('rowSelect').value);
+    multipliers = MULTIPLIER_PRESETS[numRows];
+
+    pegs = [];
+    buckets = [];
+
+    const startY = 50;
+    const spacingY = (canvas.height - 110) / numRows;
+    const startX = canvas.width / 2;
+
+    // Generate pyramid pegs
+    for (let r = 0; r < numRows; r++) {
+        const pegsInRow = r + 3;
+        const rowWidth = (pegsInRow - 1) * spacingY;
+        const rowStartX = startX - rowWidth / 2;
+
+        for (let p = 0; p < pegsInRow; p++) {
+            pegs.push({
+                x: rowStartX + p * spacingY,
+                y: startY + r * spacingY,
+                activeTime: 0
+            });
+        }
+    }
+
+    // Generate buckets at the bottom
+    const lastRowPegs = numRows + 2;
+    const lastRowWidth = (lastRowPegs - 1) * spacingY;
+    const bucketStartX = startX - lastRowWidth / 2;
+    const bucketY = startY + numRows * spacingY + 10;
+
+    for (let b = 0; b < multipliers.length; b++) {
+        buckets.push({
+            x: bucketStartX + b * spacingY,
+            width: spacingY - 2,
+            y: bucketY,
+            height: 25,
+            mult: multipliers[b]
+        });
+    }
+}
+
+function dropBall() {
+    const betVal = parseInt(document.getElementById('betInput').value);
+    if (isNaN(betVal) || betVal < 10) {
+        document.getElementById('statusBox').textContent = '❌ Minimum bet is 10 💎!';
+        return;
+    }
+
+    if (typeof spendGems === "function" && !spendGems(betVal)) {
+        document.getElementById('statusBox').textContent = '❌ Insufficient 💎 balance!';
+        return;
+    }
+
+    updateUI();
+
+    // Spawn ball near top center with slight random offset
+    const randomOffset = (Math.random() - 0.5) * 4;
+    balls.push({
+        x: canvas.width / 2 + randomOffset,
+        y: 20,
+        vx: (Math.random() - 0.5) * 0.8,
+        vy: Math.random() * 0.5,
+        bet: betVal
+    });
+
+    document.getElementById('statusBox').textContent = 'Ball dropped!';
+}
+
+function updatePhysics() {
+    for (let i = balls.length - 1; i >= 0; i--) {
+        const ball = balls[i];
+
+        ball.vy += GRAVITY;
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // Wall collisions
+        if (ball.x - BALL_RADIUS < 10) {
+            ball.x = 10 + BALL_RADIUS;
+            ball.vx *= -RESTITUTION;
+        } else if (ball.x + BALL_RADIUS > canvas.width - 10) {
+            ball.x = canvas.width - 10 - BALL_RADIUS;
+            ball.vx *= -RESTITUTION;
+        }
+
+        // Peg collisions
+        for (let peg of pegs) {
+            const dx = ball.x - peg.x;
+            const dy = ball.y - peg.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist < BALL_RADIUS + PEG_RADIUS) {
+                // Collision normal
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                // Reposition ball outside peg
+                const overlap = (BALL_RADIUS + PEG_RADIUS) - dist;
+                ball.x += nx * overlap;
+                ball.y += ny * overlap;
+
+                // Bounce velocity calculation
+                const dot = ball.vx * nx + ball.vy * ny;
+                ball.vx = (ball.vx - 2 * dot * nx) * RESTITUTION;
+                ball.vy = (ball.vy - 2 * dot * ny) * RESTITUTION;
+
+                // Add small randomness to prevent balls getting stuck
+                ball.vx += (Math.random() - 0.5) * 0.4;
+
+                peg.activeTime = 10; // Highlight peg
+                playSound('bounce');
+            }
+        }
+
+        // Check bucket landing
+        const lastBucketY = buckets[0].y;
+        if (ball.y >= lastBucketY) {
+            let landedBucket = buckets.find(b => Math.abs(ball.x - (b.x + b.width / 2)) < b.width / 2);
+            if (!landedBucket) landedBucket = buckets[0]; // Fallback to nearest edge
+
+            const payout = Math.floor(ball.bet * landedBucket.mult);
+
+            if (typeof addGems === "function") {
+                addGems(payout);
+            }
+
+            playSound('win');
+            document.getElementById('statusBox').textContent = `🎯 Landed ${landedBucket.mult}x! Won ${payout} 💎!`;
+            updateUI();
+
+            balls.splice(i, 1);
+        }
+    }
+
+    // Decay peg highlight counters
+    pegs.forEach(p => { if (p.activeTime > 0) p.activeTime--; });
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw pegs
+    for (let peg of pegs) {
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, PEG_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = peg.activeTime > 0 ? '#38bdf8' : '#64748b';
+        ctx.shadowColor = peg.activeTime > 0 ? '#38bdf8' : 'transparent';
+        ctx.shadowBlur = peg.activeTime > 0 ? 10 : 0;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+
+    // Draw buckets
+    for (let bucket of buckets) {
+        ctx.fillStyle = getBucketColor(bucket.mult);
+        ctx.beginPath();
+        ctx.roundRect(bucket.x, bucket.y, bucket.width, bucket.height, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${bucket.mult}x`, bucket.x + bucket.width / 2, bucket.y + 16);
+    }
+
+    // Draw balls
+    for (let ball of balls) {
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, BALL_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
+function gameLoop() {
+    updatePhysics();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialization
+initBoard();
+updateUI();
+gameLoop();
+</script>
+
+</body>
+</html>
