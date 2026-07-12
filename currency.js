@@ -87,16 +87,56 @@ function updateGemDisplay(){
 
     if(!display) return;
 
-    display.textContent = gems.toLocaleString();
+    display.textContent = formatGems(gems);
 
     display.animate([
-        {transform:"scale(1.35)"},
+        {transform:"scale(1.15)"},
         {transform:"scale(1)"}
     ],{
-        duration:200
+        duration:180
     });
 
 }
+
+function formatGems(num){
+
+    const units = [
+        "",
+        "K",
+        "M",
+        "B",
+        "T",
+        "Qa",
+        "Qi",
+        "Sx",
+        "Sp",
+        "Oc",
+        "No",
+        "Dc"
+    ];
+
+    let unit = 0;
+
+    while(num >= 1000 && unit < units.length-1){
+
+        num /= 1000;
+        unit++;
+
+    }
+
+    if(unit === 0)
+        return Math.floor(num).toLocaleString();
+
+    if(num >= 100)
+        return num.toFixed(0) + units[unit];
+
+    if(num >= 10)
+        return num.toFixed(1) + units[unit];
+
+    return num.toFixed(2) + units[unit];
+
+}
+
 window.addEventListener("load", updateGemDisplay);
 
 window.addEventListener("load", () => {
