@@ -325,9 +325,11 @@ function createCards(){
         }
         else if(value==="jackpot1"){
             back.innerHTML="+777";
+            back.classList.add("gold-card");
         }
         else if(value==="jackpot2"){
             back.innerHTML="x7";
+            back.classList.add("gold-card");
         }
         else{
             back.innerHTML=(value>0?"+":"")+value;
