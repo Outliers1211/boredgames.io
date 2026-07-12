@@ -72,7 +72,7 @@ h1{
 }
 
 .front{
-    background:#2563eb;
+    background:#8a8a8a;
 }
 
 .back{
@@ -173,8 +173,11 @@ function randomCard(){
 
     const roll = Math.random();
 
-    // 0.5%
-    if(roll < 0.005) return "jackpot";
+    // 0.25%
+    if(roll < 0.0025) return "jackpot1";
+    
+    // 0.25%
+    if(roll < 0.005) return "jackpot2";
 
     // 2%
     if(roll < 0.025) return "bomb";
@@ -230,23 +233,26 @@ function getCardColor(value){
 
     switch(value){
 
-        case 5: return "#22c55e";
-        case 10: return "#34d399";
-        case 20: return "#4ade80";
-        case 50: return "#84cc16";
-        case 100: return "#fde047";
+        case 5: return "#d8ffd6";
+        case 10: return "#b0fcac";
+        case 20: return "#89fc83";
+        case 50: return "#3bf53b";
+        case 100: return "#deb214";
 
-        case "jackpot":
+        case "jackpot1":
             return "linear-gradient(135deg,#ff0080,#ff8c00,#ffee00,#00ff99,#00ccff,#7c3aed)";
 
-        case -5: return "#fca5a5";
-        case -10: return "#ef4444";
-        case -20: return "#dc2626";
-        case -50: return "#991b1b";
+        case "jackpot2":
+            return "linear-gradient(135deg,#ff0080,#ff8c00,#ffee00,#00ff99,#00ccff,#7c3aed)";
 
-        case "double": return "#9333ea";
-        case "half": return "#f59e0b";
-        case "bomb": return "#111827";
+        case -5: return "#f7b5b5";
+        case -10: return "#fa8282";
+        case -20: return "#f73939";
+        case -50: return "#9e0606";
+
+        case "double": return "#11e6ed";
+        case "half": return "#d9d325";
+        case "bomb": return "#290103";
     }
 
 }
@@ -278,24 +284,27 @@ function createCards(){
             back.innerHTML="½";
         }
         else if(value==="bomb"){
-            back.innerHTML="💣<br>you lose";
+            back.innerHTML="💣";
         }
-        else if(value==="jackpot"){
-            back.innerHTML="💎<br>+777";
+        else if(value==="jackpot1"){
+            back.innerHTML=" 💎<br>+777";
+        }
+        else if(value==="jackpot2"){
+            back.innerHTML=" 💎<br>x7";
         }
         else{
             back.innerHTML=(value>0?"+":"")+value;
         }
 
         if(value==="double"){
-            back.style.background="#337ef5"; // blue
+            back.style.background="#11e6ed"; // blue
         }
         else if(value==="half"){
-            back.style.background="#f59433"; // gold
+            back.style.background="#d9d325"; // gold
         }
         else if(value==="bomb"){
             back.style.background="#111";
-            back.style.color="#ef4444";
+            back.style.color="#290103";
         }
         else{
             const color = getCardColor(value);
@@ -337,8 +346,13 @@ function createCards(){
             message.textContent="💣 BOOM! You lost everything!";
 
         }
-        else if(value==="jackpot"){
+            
+        else if(value==="jackpot1"){
             score+=777;
+        }
+            
+        else if(value==="jackpot2"){
+            score*=7;
         }
             
         else{
@@ -352,11 +366,6 @@ function createCards(){
         }
 
         scoreText.textContent=score;
-
-            if([...document.querySelectorAll(".card")].every(c=>c.classList.contains("flipped"))){
-                gameOver=true;
-                message.textContent="All cards flipped! Final score: "+score;
-            }
 
         }
 
