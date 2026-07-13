@@ -6,6 +6,38 @@
 <title>Wall Street Crash | Bored Games</title>
 
 <style>
+/* Close Button Styling */
+.close-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 35px;
+    height: 35px;
+    background-color: #ff4d4d;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background-color 0.2s, transform 0.1s;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+}
+
+.close-button:hover {
+    background-color: #ff1a1a;
+}
+
+.close-button:active {
+    transform: scale(0.9);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -21,7 +53,7 @@ body {
     flex-direction: column;
 }
 
-/* --- Currency Bar --- */
+/* Currency Bar */
 #currencyBar {
     position: fixed;
     top: 20px;
@@ -65,24 +97,6 @@ header {
     position: relative;
 }
 
-.back-btn {
-    position: absolute;
-    left: 20px;
-    top: 25px;
-    color: #94a3b8;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: color 0.2s;
-}
-
-.back-btn:hover {
-    color: #38bdf8;
-}
-
 header h1 {
     font-size: 2.2rem;
     color: #f8fafc;
@@ -110,7 +124,7 @@ main {
     }
 }
 
-/* --- Stock Terminal Screen --- */
+/* Stock Terminal Screen */
 .terminal {
     background: #1e293b;
     border: 1px solid #334155;
@@ -195,7 +209,7 @@ canvas {
     text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
 }
 
-/* --- Control Panel --- */
+/* Control Panel */
 .control-panel {
     background: #1e293b;
     border: 1px solid #334155;
@@ -250,8 +264,13 @@ canvas {
     cursor: pointer;
 }
 
-.quick-bets button:hover {
+.quick-bets button:hover:not(:disabled) {
     background: #475569;
+}
+
+.quick-bets button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .action-btn {
@@ -294,6 +313,14 @@ canvas {
     box-shadow: none;
 }
 
+.message {
+    font-size: 0.95rem;
+    min-height: 24px;
+    text-align: center;
+    color: #94a3b8;
+    font-weight: bold;
+}
+
 .history {
     display: flex;
     gap: 8px;
@@ -325,13 +352,14 @@ footer {
 
 <body>
 
+<a href="../../index.html" class="close-button">&times;</a>
+
 <div id="currencyBar">
     <span class="gemIcon">💎</span>
     <span id="gemCount">0</span>
 </div>
 
 <header>
-    <a href="../../index.html" class="back-btn">← Back to Dashboard</a>
     <h1>📈 Wall Street Crash</h1>
     <p>Cash out before the stock market crashes!</p>
 </header>
@@ -362,11 +390,11 @@ footer {
             <label for="betAmount">Investment Amount (Gems)</label>
             <input type="number" id="betAmount" value="50" min="10" step="10">
             <div class="quick-bets">
-                <button onclick="adjustBet(10)">+10</button>
-                <button onclick="adjustBet(50)">+50</button>
-                <button onclick="adjustBet(100)">+100</button>
-                <button onclick="setHalfBet()">½</button>
-                <button onclick="setMaxBet()">Max</button>
+                <button class="quick-btn" onclick="adjustBet(10)">+10</button>
+                <button class="quick-btn" onclick="adjustBet(50)">+50</button>
+                <button class="quick-btn" onclick="adjustBet(100)">+100</button>
+                <button class="quick-btn" onclick="setHalfBet()">½</button>
+                <button class="quick-btn" onclick="setMaxBet()">Max</button>
             </div>
         </div>
 
@@ -374,6 +402,8 @@ footer {
             <label for="autoCashout">Auto Cash-out Multiplier (Optional)</label>
             <input type="number" id="autoCashout" placeholder="e.g. 2.00" min="1.01" step="0.1">
         </div>
+
+        <div class="message" id="message">Place your investment to buy stock.</div>
 
         <button id="mainBtn" class="action-btn start" onclick="handleMainAction()">Buy Stock</button>
     </div>
@@ -385,13 +415,6 @@ footer {
 </footer>
 
 <script>
-const canvas = document.getElementById('stockCanvas');
-const ctx = canvas.getContext('2d');
-const multiplierEl = document.getElementById('multiplierDisplay');
-const statusBadge = document.getElementById('statusBadge');
-const mainBtn = document.getElementById('mainBtn');
-const historyEl = document.getElementById('crashHistory');
-
 let gameState = 'IDLE'; // 'IDLE', 'RUNNING', 'CRASHED', 'CASHED_OUT'
 let currentMultiplier = 1.00;
 let highestMultiplier = 1.00;
@@ -400,9 +423,16 @@ let betAmount = 50;
 let chartPoints = [];
 let lastTickTime = 0;
 
-// Market trend drift variables
-let trendPhase = 'UP'; // 'UP', 'FLAT', 'DRIFT'
+let trendPhase = 'UP';
 let phaseTimer = 0;
+
+const canvas = document.getElementById('stockCanvas');
+const ctx = canvas.getContext('2d');
+const multiplierEl = document.getElementById('multiplierDisplay');
+const statusBadge = document.getElementById('statusBadge');
+const mainBtn = document.getElementById('mainBtn');
+const historyEl = document.getElementById('crashHistory');
+const messageEl = document.getElementById('message');
 
 function resizeCanvas() {
     canvas.width = canvas.parentElement.clientWidth;
@@ -413,12 +443,14 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 
 function getGemBalance() {
-    if (typeof getGems === 'function') return getGems();
+    const gemEl = document.getElementById('gemCount');
+    return gemEl ? parseInt(gemEl.textContent) || 0 : 0;
 }
 
-function updateUI() {
-    const gemEl = document.getElementById('gemCount');
-    if (gemEl) gemEl.textContent = getGemBalance();
+function setControlsDisabled(disabled) {
+    document.getElementById('betAmount').disabled = disabled;
+    document.getElementById('autoCashout').disabled = disabled;
+    document.querySelectorAll('.quick-btn').forEach(btn => btn.disabled = disabled);
 }
 
 function adjustBet(val) {
@@ -439,7 +471,7 @@ function setMaxBet() {
 
 function generateCrashPoint() {
     const rand = Math.random();
-    if (rand < 0.05) return 1.00;
+    if (rand < 0.05) return 1.00; // 5% immediate crash risk
     return parseFloat((0.99 / (1 - rand)).toFixed(2));
 }
 
@@ -455,21 +487,19 @@ function startTrade() {
     const inputBet = parseInt(document.getElementById('betAmount').value);
     
     if (isNaN(inputBet) || inputBet < 10) {
-        alert('Minimum investment is 10 Gems!');
+        messageEl.textContent = '❌ Minimum investment is 💎10!';
         return;
     }
 
-    if (getGemBalance() < inputBet) {
-        alert('Not enough gems!');
-        return;
+    // Match Card Flip style currency check: spendGems returns true/false
+    if (typeof spendGems === 'function') {
+        if (!spendGems(inputBet)) {
+            messageEl.textContent = '❌ Not enough gems to buy stock!';
+            return;
+        }
     }
 
     betAmount = inputBet;
-    if (typeof spendGems === 'function') {
-        spendGems(betAmount);
-    }
-    updateUI();
-
     crashPoint = generateCrashPoint();
     currentMultiplier = 1.00;
     highestMultiplier = 1.00;
@@ -487,8 +517,9 @@ function startTrade() {
 
     mainBtn.textContent = 'Cash Out';
     mainBtn.className = 'action-btn cashout';
-    document.getElementById('betAmount').disabled = true;
-    document.getElementById('autoCashout').disabled = true;
+    
+    messageEl.textContent = '📈 Market active! Cash out before it drops!';
+    setControlsDisabled(true);
 
     requestAnimationFrame(updateMarket);
 }
@@ -502,7 +533,6 @@ function updateMarket(timestamp) {
     if (gameState === 'RUNNING') {
         phaseTimer -= delta;
 
-        // Switch stock trend behaviors randomly
         if (phaseTimer <= 0) {
             const roll = Math.random();
             if (roll < 0.65) {
@@ -517,14 +547,13 @@ function updateMarket(timestamp) {
             }
         }
 
-        // Apply multiplier movement based on current phase (slower overall speed)
         let rate = 0;
         if (trendPhase === 'UP') {
-            rate = 0.08 + (currentMultiplier * 0.03); // Controlled steady rise
+            rate = 0.08 + (currentMultiplier * 0.03);
         } else if (trendPhase === 'FLAT') {
-            rate = 0; // Straight horizontal line
+            rate = 0;
         } else if (trendPhase === 'DRIFT') {
-            rate = -0.015; // Subtle downward consolidation drift
+            rate = -0.015;
         }
 
         currentMultiplier += rate * delta;
@@ -534,13 +563,11 @@ function updateMarket(timestamp) {
             highestMultiplier = currentMultiplier;
         }
 
-        // Check crash trigger
         if (highestMultiplier >= crashPoint) {
             triggerPlummet();
             return;
         }
 
-        // Auto Cash-out check
         const autoTarget = parseFloat(document.getElementById('autoCashout').value);
         if (!isNaN(autoTarget) && currentMultiplier >= autoTarget && autoTarget > 1.00) {
             cashOut();
@@ -565,9 +592,10 @@ function triggerPlummet() {
     multiplierEl.textContent = crashPoint.toFixed(2) + 'x';
     multiplierEl.classList.add('crashed');
 
-    // Add crash drop points straight to zero/base
     const lastPoint = chartPoints[chartPoints.length - 1];
     chartPoints.push({ x: lastPoint.x + 1, y: 1.00 });
+
+    messageEl.textContent = `💥 Market crashed at ${crashPoint.toFixed(2)}x! You lost 💎${betAmount}`;
 
     addHistory(crashPoint, false);
     resetControlPanel();
@@ -582,10 +610,11 @@ function cashOut() {
     if (typeof addGems === 'function') {
         addGems(winnings);
     }
-    updateUI();
 
     statusBadge.textContent = 'Profit Secured';
     statusBadge.className = 'status-badge live';
+
+    messageEl.textContent = `💰 Cashed out at ${currentMultiplier.toFixed(2)}x! Earned 💎${winnings}`;
 
     addHistory(currentMultiplier, true);
     resetControlPanel();
@@ -594,8 +623,8 @@ function cashOut() {
 function resetControlPanel() {
     mainBtn.textContent = 'Buy Stock';
     mainBtn.className = 'action-btn start';
-    document.getElementById('betAmount').disabled = false;
-    document.getElementById('autoCashout').disabled = false;
+    setControlsDisabled(false);
+
     setTimeout(() => {
         if (gameState !== 'RUNNING' && gameState !== 'PLUMMETING') gameState = 'IDLE';
     }, 500);
@@ -615,7 +644,6 @@ function addHistory(val, isWin) {
 function drawChart(isCrashed = false) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background Gridlines
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 50) {
@@ -650,7 +678,6 @@ function drawChart(isCrashed = false) {
 
     ctx.stroke();
 
-    // Chart Line Glow Effect
     ctx.shadowColor = lineColor;
     ctx.shadowBlur = 10;
     ctx.stroke();
@@ -659,9 +686,9 @@ function drawChart(isCrashed = false) {
 
 // Initial setup
 resizeCanvas();
-updateUI();
 </script>
 
+<!-- Load external currency script -->
 <script src="../../currency.js"></script>
 
 </body>
