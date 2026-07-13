@@ -413,7 +413,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 
 function getGemBalance() {
-    return typeof getGems === 'function' ? getGems();
+    if (typeof getGems === 'function') return getGems();
 }
 
 function updateUI() {
