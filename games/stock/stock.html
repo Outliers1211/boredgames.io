@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wall Street Crash | Bored Games</title>
- 
+
 <style>
 * {
     margin: 0;
@@ -396,11 +396,15 @@ const historyEl = document.getElementById('crashHistory');
 
 let gameState = 'IDLE'; // 'IDLE', 'RUNNING', 'CRASHED', 'CASHED_OUT'
 let currentMultiplier = 1.00;
+let highestMultiplier = 1.00;
 let crashPoint = 0;
 let betAmount = 50;
-let animationFrame = null;
 let chartPoints = [];
-let startTime = 0;
+let lastTickTime = 0;
+
+// Market trend drift variables
+let trendPhase = 'UP'; // 'UP', 'FLAT', 'DRIFT'
+let phaseTimer = 0;
 
 function resizeCanvas() {
     canvas.width = canvas.parentElement.clientWidth;
@@ -411,7 +415,7 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 
 function getGemBalance() {
-    return typeof getGems === 'function' ? getGems() : 1000;
+    return typeof getGems === 'function' ? getGems();
 }
 
 function updateUI() {
@@ -436,7 +440,6 @@ function setMaxBet() {
 }
 
 function generateCrashPoint() {
-    // 5% instant crash chance, logarithmic curve for multiplier
     const rand = Math.random();
     if (rand < 0.05) return 1.00;
     return parseFloat((0.99 / (1 - rand)).toFixed(2));
@@ -464,16 +467,20 @@ function startTrade() {
     }
 
     betAmount = inputBet;
-    if (typeof deductGems === 'function') {
-        deductGems(betAmount);
+    if (typeof spendGems === 'function') {
+        spendGems(betAmount);
     }
     updateUI();
 
     crashPoint = generateCrashPoint();
     currentMultiplier = 1.00;
+    highestMultiplier = 1.00;
     gameState = 'RUNNING';
     chartPoints = [{ x: 0, y: 1.00 }];
-    startTime = performance.now();
+    lastTickTime = performance.now();
+
+    trendPhase = 'UP';
+    phaseTimer = 0;
 
     multiplierEl.classList.remove('crashed');
     multiplierEl.textContent = '1.00x';
@@ -489,28 +496,83 @@ function startTrade() {
 }
 
 function updateMarket(timestamp) {
-    if (gameState !== 'RUNNING') return;
+    if (gameState !== 'RUNNING' && gameState !== 'PLUMMETING') return;
 
-    const elapsed = (timestamp - startTime) / 1000;
-    // Exponential multiplier progression
-    currentMultiplier = parseFloat(Math.pow(1.08, elapsed * 3).toFixed(2));
+    const delta = (timestamp - lastTickTime) / 1000;
+    lastTickTime = timestamp;
 
-    const autoTarget = parseFloat(document.getElementById('autoCashout').value);
-    if (!isNaN(autoTarget) && currentMultiplier >= autoTarget && autoTarget > 1.00) {
-        cashOut();
-        return;
+    if (gameState === 'RUNNING') {
+        phaseTimer -= delta;
+
+        // Switch stock trend behaviors randomly
+        if (phaseTimer <= 0) {
+            const roll = Math.random();
+            if (roll < 0.65) {
+                trendPhase = 'UP';
+                phaseTimer = 1.2 + Math.random() * 2.0;
+            } else if (roll < 0.85) {
+                trendPhase = 'FLAT';
+                phaseTimer = 0.6 + Math.random() * 1.0;
+            } else {
+                trendPhase = 'DRIFT';
+                phaseTimer = 0.5 + Math.random() * 0.8;
+            }
+        }
+
+        // Apply multiplier movement based on current phase (slower overall speed)
+        let rate = 0;
+        if (trendPhase === 'UP') {
+            rate = 0.08 + (currentMultiplier * 0.03); // Controlled steady rise
+        } else if (trendPhase === 'FLAT') {
+            rate = 0; // Straight horizontal line
+        } else if (trendPhase === 'DRIFT') {
+            rate = -0.015; // Subtle downward consolidation drift
+        }
+
+        currentMultiplier += rate * delta;
+        currentMultiplier = Math.max(1.00, currentMultiplier);
+
+        if (currentMultiplier > highestMultiplier) {
+            highestMultiplier = currentMultiplier;
+        }
+
+        // Check crash trigger
+        if (highestMultiplier >= crashPoint) {
+            triggerPlummet();
+            return;
+        }
+
+        // Auto Cash-out check
+        const autoTarget = parseFloat(document.getElementById('autoCashout').value);
+        if (!isNaN(autoTarget) && currentMultiplier >= autoTarget && autoTarget > 1.00) {
+            cashOut();
+            return;
+        }
+
+        multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+        chartPoints.push({ x: chartPoints.length, y: currentMultiplier });
     }
 
-    if (currentMultiplier >= crashPoint) {
-        triggerCrash();
-        return;
+    drawChart(gameState === 'PLUMMETING');
+
+    if (gameState === 'RUNNING' || gameState === 'PLUMMETING') {
+        requestAnimationFrame(updateMarket);
     }
+}
 
-    multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
-    chartPoints.push({ x: elapsed, y: currentMultiplier });
+function triggerPlummet() {
+    gameState = 'PLUMMETING';
+    statusBadge.textContent = 'Market Crashed';
+    statusBadge.className = 'status-badge crashed';
+    multiplierEl.textContent = crashPoint.toFixed(2) + 'x';
+    multiplierEl.classList.add('crashed');
 
-    drawChart();
-    animationFrame = requestAnimationFrame(updateMarket);
+    // Add crash drop points straight to zero/base
+    const lastPoint = chartPoints[chartPoints.length - 1];
+    chartPoints.push({ x: lastPoint.x + 1, y: 1.00 });
+
+    addHistory(crashPoint, false);
+    resetControlPanel();
 }
 
 function cashOut() {
@@ -531,26 +593,13 @@ function cashOut() {
     resetControlPanel();
 }
 
-function triggerCrash() {
-    gameState = 'CRASHED';
-    multiplierEl.textContent = crashPoint.toFixed(2) + 'x';
-    multiplierEl.classList.add('crashed');
-
-    statusBadge.textContent = 'Market Crashed';
-    statusBadge.className = 'status-badge crashed';
-
-    addHistory(crashPoint, false);
-    drawChart(true);
-    resetControlPanel();
-}
-
 function resetControlPanel() {
     mainBtn.textContent = 'Buy Stock';
     mainBtn.className = 'action-btn start';
     document.getElementById('betAmount').disabled = false;
     document.getElementById('autoCashout').disabled = false;
     setTimeout(() => {
-        if (gameState !== 'RUNNING') gameState = 'IDLE';
+        if (gameState !== 'RUNNING' && gameState !== 'PLUMMETING') gameState = 'IDLE';
     }, 500);
 }
 
@@ -568,7 +617,7 @@ function addHistory(val, isWin) {
 function drawChart(isCrashed = false) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Gridlines
+    // Background Gridlines
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 50) {
@@ -587,14 +636,14 @@ function drawChart(isCrashed = false) {
     if (chartPoints.length < 2) return;
 
     const lineColor = isCrashed ? '#ef4444' : '#10b981';
-    const maxVal = Math.max(2.0, currentMultiplier * 1.1);
+    const maxVal = Math.max(1.8, highestMultiplier * 1.15);
 
     ctx.beginPath();
     ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3.5;
 
     chartPoints.forEach((pt, idx) => {
-        const xPos = (idx / Math.max(100, chartPoints.length)) * canvas.width;
+        const xPos = (idx / Math.max(80, chartPoints.length)) * canvas.width;
         const yPos = canvas.height - ((pt.y - 1) / (maxVal - 1)) * (canvas.height - 40) - 20;
 
         if (idx === 0) ctx.moveTo(xPos, yPos);
@@ -603,14 +652,14 @@ function drawChart(isCrashed = false) {
 
     ctx.stroke();
 
-    // Glow effect
+    // Chart Line Glow Effect
     ctx.shadowColor = lineColor;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 10;
     ctx.stroke();
     ctx.shadowBlur = 0;
 }
 
-// Initial initialization
+// Initial setup
 resizeCanvas();
 updateUI();
 </script>
