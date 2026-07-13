@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wall Street Crash | Bored Games</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Inter, Segoe UI, Arial, sans-serif;
+}
+
+body {
+    background: #0f172a;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Currency Bar --- */
+#currencyBar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(15, 23, 42, .95);
+    border: 2px solid #38bdf8;
+    border-radius: 999px;
+    box-shadow: 0 0 12px rgba(56, 189, 248, .3);
+    font-size: 1.2rem;
+    font-weight: bold;
+    user-select: none;
+    z-index: 9999;
+}
+
+.gemIcon {
+    font-size: 1.4rem;
+    animation: gemFloat 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px #38bdf8);
+}
+
+#gemCount {
+    min-width: 60px;
+    text-align: right;
+    color: #ffffff;
+    text-shadow: 0 0 6px #38bdf8;
+    transition: transform .25s;
+}
+
+@keyframes gemFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+header {
+    padding: 25px 20px 15px;
+    text-align: center;
+    position: relative;
+}
+
+.back-btn {
+    position: absolute;
+    left: 20px;
+    top: 25px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+}
+
+.back-btn:hover {
+    color: #38bdf8;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    color: #f8fafc;
+}
+
+header p {
+    color: #64748b;
+    margin-top: 4px;
+    font-size: 0.95rem;
+}
+
+main {
+    width: min(1000px, 92%);
+    margin: auto;
+    flex: 1;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    padding-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+    main {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Stock Terminal Screen --- */
+.terminal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.terminal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.ticker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #f8fafc;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    background: #334155;
+    color: #94a3b8;
+}
+
+.status-badge.live {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid #10b981;
+}
+
+.status-badge.crashed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.chart-container {
+    position: relative;
+    flex: 1;
+    min-height: 320px;
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    overflow: hidden;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.multiplier-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    font-weight: 900;
+    color: #10b981;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    user-select: none;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.multiplier-display.crashed {
+    color: #ef4444;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+/* --- Control Panel --- */
+.control-panel {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.input-group input {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    outline: none;
+}
+
+.input-group input:focus {
+    border-color: #38bdf8;
+}
+
+.quick-bets {
+    display: flex;
+    gap: 6px;
+}
+
+.quick-bets button {
+    flex: 1;
+    background: #334155;
+    border: none;
+    color: #cbd5e1;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.quick-bets button:hover {
+    background: #475569;
+}
+
+.action-btn {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: transform 0.1s, background 0.2s;
+}
+
+.action-btn.start {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.start:hover {
+    background: #059669;
+}
+
+.action-btn.cashout {
+    background: #f59e0b;
+    color: black;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.action-btn.cashout:hover {
+    background: #d97706;
+}
+
+.action-btn:disabled {
+    background: #334155;
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.history {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 6px 0;
+}
+
+.history-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: #0f172a;
+    border: 1px solid #334155;
+    white-space: nowrap;
+}
+
+.history-pill.win { color: #10b981; }
+.history-pill.loss { color: #ef4444; }
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+</style>
+</head>
+
+<body>
+
+<div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">0</span>
+</div>
+
+<header>
+    <a href="../../index.html" class="back-btn">← Back to Dashboard</a>
+    <h1>📈 Wall Street Crash</h1>
+    <p>Cash out before the stock market crashes!</p>
+</header>
+
+<main>
+
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="ticker">
+                <span>📉 BORD/USD</span>
+            </div>
+            <div id="statusBadge" class="status-badge">Ready</div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="stockCanvas"></canvas>
+            <div id="multiplierDisplay" class="multiplier-display">1.00x</div>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 6px;">Recent Crashes:</div>
+            <div class="history" id="crashHistory"></div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="input-group">
+            <label for="betAmount">Investment Amount (Gems)</label>
+            <input type="number" id="betAmount" value="50" min="10" step="10">
+            <div class="quick-bets">
+                <button onclick="adjustBet(10)">+10</button>
+                <button onclick="adjustBet(50)">+50</button>
+                <button onclick="adjustBet(100)">+100</button>
+                <button onclick="setHalfBet()">½</button>
+                <button onclick="setMaxBet()">Max</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="autoCashout">Auto Cash-out Multiplier (Optional)</label>
+            <input type="number" id="autoCashout" placeholder="e.g. 2.00" min="1.01" step="0.1">
+        </div>
+
+        <button id="mainBtn" class="action-btn start" onclick="handleMainAction()">Buy Stock</button>
+    </div>
+
+</main>
+
+<footer>
+    Made with ❤️ using HTML, CSS & JavaScript. copyright owner outliers©. All rights not reserved.
+</footer>
+
+<script src="../../currency.js"></script>
+
+<script>
+const canvas = document.getElementById('stockCanvas');
+const ctx = canvas.getContext('2d');
+const multiplierEl = document.getElementById('multiplierDisplay');
+const statusBadge = document.getElementById('statusBadge');
+const mainBtn = document.getElementById('mainBtn');
+const historyEl = document.getElementById('crashHistory');
+
+let gameState = 'IDLE'; // 'IDLE', 'RUNNING', 'CRASHED', 'CASHED_OUT'
+let currentMultiplier = 1.00;
+let crashPoint = 0;
+let betAmount = 50;
+let animationFrame = null;
+let chartPoints = [];
+let startTime = 0;
+
+function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth;
+    canvas.height = canvas.parentElement.clientHeight;
+    drawChart();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+function getGemBalance() {
+    return typeof getGems === 'function' ? getGems() : 1000;
+}
+
+function updateUI() {
+    const gemEl = document.getElementById('gemCount');
+    if (gemEl) gemEl.textContent = getGemBalance();
+}
+
+function adjustBet(val) {
+    if (gameState !== 'IDLE') return;
+    const input = document.getElementById('betAmount');
+    input.value = Math.max(10, (parseInt(input.value) || 0) + val);
+}
+
+function setHalfBet() {
+    if (gameState !== 'IDLE') return;
+    document.getElementById('betAmount').value = Math.max(10, Math.floor(getGemBalance() / 2));
+}
+
+function setMaxBet() {
+    if (gameState !== 'IDLE') return;
+    document.getElementById('betAmount').value = Math.max(10, getGemBalance());
+}
+
+function generateCrashPoint() {
+    // 5% instant crash chance, logarithmic curve for multiplier
+    const rand = Math.random();
+    if (rand < 0.05) return 1.00;
+    return parseFloat((0.99 / (1 - rand)).toFixed(2));
+}
+
+function handleMainAction() {
+    if (gameState === 'IDLE') {
+        startTrade();
+    } else if (gameState === 'RUNNING') {
+        cashOut();
+    }
+}
+
+function startTrade() {
+    const inputBet = parseInt(document.getElementById('betAmount').value);
+    
+    if (isNaN(inputBet) || inputBet < 10) {
+        alert('Minimum investment is 10 Gems!');
+        return;
+    }
+
+    if (getGemBalance() < inputBet) {
+        alert('Not enough gems!');
+        return;
+    }
+
+    betAmount = inputBet;
+    if (typeof deductGems === 'function') {
+        deductGems(betAmount);
+    }
+    updateUI();
+
+    crashPoint = generateCrashPoint();
+    currentMultiplier = 1.00;
+    gameState = 'RUNNING';
+    chartPoints = [{ x: 0, y: 1.00 }];
+    startTime = performance.now();
+
+    multiplierEl.classList.remove('crashed');
+    multiplierEl.textContent = '1.00x';
+    statusBadge.textContent = 'Trading';
+    statusBadge.className = 'status-badge live';
+
+    mainBtn.textContent = 'Cash Out';
+    mainBtn.className = 'action-btn cashout';
+    document.getElementById('betAmount').disabled = true;
+    document.getElementById('autoCashout').disabled = true;
+
+    requestAnimationFrame(updateMarket);
+}
+
+function updateMarket(timestamp) {
+    if (gameState !== 'RUNNING') return;
+
+    const elapsed = (timestamp - startTime) / 1000;
+    // Exponential multiplier progression
+    currentMultiplier = parseFloat(Math.pow(1.08, elapsed * 3).toFixed(2));
+
+    const autoTarget = parseFloat(document.getElementById('autoCashout').value);
+    if (!isNaN(autoTarget) && currentMultiplier >= autoTarget && autoTarget > 1.00) {
+        cashOut();
+        return;
+    }
+
+    if (currentMultiplier >= crashPoint) {
+        triggerCrash();
+        return;
+    }
+
+    multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+    chartPoints.push({ x: elapsed, y: currentMultiplier });
+
+    drawChart();
+    animationFrame = requestAnimationFrame(updateMarket);
+}
+
+function cashOut() {
+    if (gameState !== 'RUNNING') return;
+
+    gameState = 'CASHED_OUT';
+    const winnings = Math.floor(betAmount * currentMultiplier);
+
+    if (typeof addGems === 'function') {
+        addGems(winnings);
+    }
+    updateUI();
+
+    statusBadge.textContent = 'Profit Secured';
+    statusBadge.className = 'status-badge live';
+
+    addHistory(currentMultiplier, true);
+    resetControlPanel();
+}
+
+function triggerCrash() {
+    gameState = 'CRASHED';
+    multiplierEl.textContent = crashPoint.toFixed(2) + 'x';
+    multiplierEl.classList.add('crashed');
+
+    statusBadge.textContent = 'Market Crashed';
+    statusBadge.className = 'status-badge crashed';
+
+    addHistory(crashPoint, false);
+    drawChart(true);
+    resetControlPanel();
+}
+
+function resetControlPanel() {
+    mainBtn.textContent = 'Buy Stock';
+    mainBtn.className = 'action-btn start';
+    document.getElementById('betAmount').disabled = false;
+    document.getElementById('autoCashout').disabled = false;
+    setTimeout(() => {
+        if (gameState !== 'RUNNING') gameState = 'IDLE';
+    }, 500);
+}
+
+function addHistory(val, isWin) {
+    const pill = document.createElement('div');
+    pill.className = `history-pill ${isWin ? 'win' : 'loss'}`;
+    pill.textContent = `${val.toFixed(2)}x`;
+    historyEl.prepend(pill);
+
+    if (historyEl.children.length > 8) {
+        historyEl.removeChild(historyEl.lastChild);
+    }
+}
+
+function drawChart(isCrashed = false) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Gridlines
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+    if (chartPoints.length < 2) return;
+
+    const lineColor = isCrashed ? '#ef4444' : '#10b981';
+    const maxVal = Math.max(2.0, currentMultiplier * 1.1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 4;
+
+    chartPoints.forEach((pt, idx) => {
+        const xPos = (idx / Math.max(100, chartPoints.length)) * canvas.width;
+        const yPos = canvas.height - ((pt.y - 1) / (maxVal - 1)) * (canvas.height - 40) - 20;
+
+        if (idx === 0) ctx.moveTo(xPos, yPos);
+        else ctx.lineTo(xPos, yPos);
+    });
+
+    ctx.stroke();
+
+    // Glow effect
+    ctx.shadowColor = lineColor;
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+}
+
+// Initial initialization
+resizeCanvas();
+updateUI();
+</script>
+
+</body>
+</html>
