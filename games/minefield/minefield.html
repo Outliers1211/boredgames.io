@@ -5,6 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minefield Sweeper</title>
 <style>
+/* The 'X' Button Link */
+        .close-button {
+            position: absolute;
+            top: 15px;
+            left: 15px; /* Changed from right to left */
+            
+            /* Sizing & Shape */
+            width: 35px;
+            height: 35px;
+            background-color: #ff4d4d;
+            border-radius: 50px;
+            
+            /* Flexbox to perfectly center the 'X' */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            /* Text/X Styling */
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            
+            /* Smooth transitions for hover effects */
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Hover effect (darkens the red) */
+        .close-button:hover {
+            background-color: #ff1a1a;
+        }
+
+        /* Click effect (button presses down) */
+        .close-button:active {
+            transform: scale(0.9);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
+        }
+
+
 * {
     margin: 0;
     padding: 0;
@@ -231,6 +273,10 @@ select {
 </head>
 
 <body>
+
+<div>
+    <a href="../../index.html" class="close-button">&times;</a>
+</div>
 
 <div id="currencyBar">
     <span class="gemIcon">💎</span>
