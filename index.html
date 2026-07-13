@@ -347,40 +347,38 @@ footer {
 <div class="modal-overlay" id="shopModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>💎 Gem Refill Shop</h2>
+            <h2>💎 Gem Shop</h2>
             <button class="close-btn" onclick="closeShop()">&times;</button>
         </div>
         <div class="shop-grid">
             <div class="shop-card">
                 <span style="font-size: 2.5rem;">💎</span>
-                <div class="gem-amount">+500 Gems</div>
+                <div class="gem-amount">+250 Gems</div>
                 <p style="color: #94a3b8; font-size: 0.85rem;">Starter Pouch</p>
-                <button class="gem-price-btn" onclick="buyGems(500)">FREE Claim</button>
+                <button class="gem-price-btn" onclick="buyGems(250)">FREE</button>
             </div>
 
             <div class="shop-card popular">
-                <span class="popular-badge">Best Value</span>
+                <span class="popular-badge">Popular</span>
                 <span style="font-size: 2.5rem;">💎💎</span>
-                <div class="gem-amount">+2,500 Gems</div>
+                <div class="gem-amount">+5,000 Gems</div>
                 <p style="color: #94a3b8; font-size: 0.85rem;">Gamer Sack</p>
-                <button class="gem-price-btn" onclick="buyGems(2500)">Claim</button>
+                <button class="gem-price-btn" onclick="buyGems(5000)">$10</button>
             </div>
 
             <div class="shop-card">
                 <span style="font-size: 2.5rem;">👑💎</span>
-                <div class="gem-amount">+10,000 Gems</div>
+                <div class="gem-amount">+50,000 Gems</div>
                 <p style="color: #94a3b8; font-size: 0.85rem;">High Roller Vault</p>
-                <button class="gem-price-btn" onclick="buyGems(10000)">Claim</button>
+                <button class="gem-price-btn" onclick="buyGems(50000)">$90(10% off)</button>
             </div>
         </div>
     </div>
 </div>
 
 <footer>
-    Made with ❤️ using HTML, CSS & JavaScript
+    Made with ❤️ using HTML, CSS & JavaScript. copyright owner outliers©. All rights not reserved.
 </footer>
-
-<script src="currency.js"></script>
 
 <script>
 const games = [
@@ -440,6 +438,8 @@ function buyGems(amount) {
 // Initial Sync on Load
 updateUI();
 </script>
+
+<script src="currency.js"></script>
 
 </body>
 </html>
