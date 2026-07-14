@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tower of fortune</title>
+
+<style>
+/* The 'X' Button Link */
+        .close-button {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            
+            /* Sizing & Shape */
+            width: 35px;
+            height: 35px;
+            background-color: #ff4d4d;
+            border-radius: 50px;
+            
+            /* Flexbox to perfectly center the 'X' */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            /* Text/X Styling */
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            text-decoration: none;
+            
+            /* Smooth transitions for hover effects */
+            transition: background-color 0.2s, transform 0.1s;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-button:hover { background-color: #ff1a1a; }
+        .close-button:active { transform: scale(0.9); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3); }
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background: #111827;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 30px 15px;
+    overflow-x: hidden;
+    transition: background-color 0.4s ease;
+}
+
+#currencyBar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(22,27,34,.95);
+    border: 2px solid #4cc9ff;
+    border-radius: 999px;
+    box-shadow: 0 0 10px rgba(76,201,255,.4), inset 0 0 8px rgba(255,255,255,.05);
+    font-size: 1.3rem;
+    font-weight: bold;
+    user-select: none;
+    z-index: 9999;
+}
+
+.gemIcon {
+    font-size: 1.5rem;
+    animation: gemFloat 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px #4cc9ff);
+}
+
+#gemCount {
+    min-width: 70px;
+    text-align: right;
+    color: #ffffff;
+    text-shadow: 0 0 6px #4cc9ff;
+}
+
+@keyframes gemFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+h1 { margin-bottom: 10px; text-align: center; }
+
+/* Setup & Bet Panel */
+.setup-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    background: rgba(31, 41, 55, 0.7);
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #3b82f6;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 20px;
+}
+
+.bet-presets {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.bet-btn {
+    background: #1f2937;
+    border: 2px solid #4cc9ff;
+    color: #4cc9ff;
+    padding: 8px 16px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+}
+.bet-btn.selected {
+    background: #4cc9ff;
+    color: #111827;
+    box-shadow: 0 0 12px #4cc9ff;
+}
+
+.start-btn {
+    background: #2563eb;
+    color: white;
+    width: 100%;
+    font-size: 1.2rem;
+}
+
+/* Active Game Elements */
+.game-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.floor-indicator {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4cc9ff;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.safe-floor {
+    color: #deb214;
+    text-shadow: 0 0 8px gold;
+}
+
+.pot-display {
+    font-size: 2.2rem;
+    margin-bottom: 25px;
+    font-weight: bold;
+}
+#potCount {
+    display: inline-block;
+    transition: transform 0.2s, color 0.2s;
+}
+
+/* 2x2 Elevator Grid Layout */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    width: 100%;
+    max-width: 340px;
+    margin-bottom: 30px;
+}
+
+.card {
+    aspect-ratio: 1 / 1.2;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform .6s;
+    transform-style: preserve-3d;
+}
+
+.flipped .inner {
+    transform: rotateY(180deg);
+}
+
+.front, .back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    backface-visibility: hidden;
+}
+
+.front {
+    background: #1f2937;
+    border: 3px solid #3b82f6;
+    color: #3b82f6;
+    font-size: 2.5rem;
+    box-shadow: inset 0 0 15px rgba(59,130,246,0.3);
+}
+.front::after {
+    content: "🚪";
+    font-size: 2rem;
+    margin-top: 5px;
+}
+
+.back {
+    transform: rotateY(180deg);
+    font-size: 2rem;
+}
+
+/* Modifiers / Card Types Colors */
+.mod-gain { background: #1cfc03; color: #000; }
+.mod-jackpot { 
+    animation: rainbow 2s linear infinite; 
+    color: white; 
+    text-shadow: 0 0 8px white, 0 0 15px gold;
+}
+.mod-slasher { background: #d9d325; color: #000; }
+.mod-fail { background: #111111; color: #ff3333; font-size: 2.5rem !important; }
+
+@keyframes rainbow {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
+
+/* Bottom Interface & Modals */
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+button:hover:not(:disabled) { opacity: 0.9; }
+button:active:not(:disabled) { transform: scale(0.98); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.bank { background: #16a34a; color: white; width: 200px; font-size: 1.1rem; }
+
+/* Failure Screen Overlays */
+.failure-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(17, 24, 39, 0.95);
+    z-index: 10000;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    text-align: center;
+}
+.failure-overlay h2 { font-size: 2.5rem; color: #ff3333; margin-bottom: 15px; }
+.failure-overlay p { font-size: 1.2rem; margin-bottom: 30px; max-width: 400px; }
+.modal-btns { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 300px; }
+.continue-btn { background: #d97706; color: white; font-size: 1.1rem; padding: 15px; }
+.forfeit-btn { background: #4b5563; color: white; font-size: 1rem; }
+
+.message {
+    font-size: 1.2rem;
+    min-height: 35px;
+    text-align: center;
+    margin-top: 15px;
+    max-width: 450px;
+}
+
+/* Background Flash Effects */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-5px, 3px); }
+    20%, 40%, 60%, 80% { transform: translate(5px, -3px); }
+}
+@keyframes flashGold { 0%, 100% { background-color: #111827; } 50% { background-color: #deb214; } }
+@keyframes flashPurple { 0%, 100% { background-color: #111827; } 50% { background-color: #7c3aed; } }
+@keyframes flashGreen { 0%, 100% { background-color: #111827; } 50% { background-color: #16a34a; } }
+
+.effect-shake { animation: screenShake 0.4s ease-in-out; }
+.effect-gold { animation: flashGold 0.5s ease-in-out; }
+.effect-purple { animation: flashPurple 0.5s ease-in-out; }
+.effect-green { animation: flashGreen 0.5s ease-in-out; }
+</style>
+</head>
+
+<body>
+
+<h1>🏙️ Tower of fortune</h1>
+
+<div>
+    <a href="../../index.html" class="close-button">&times;</a>
+</div>
+
+<div id="currencyBar">
+    <span class="gemIcon">💎</span>
+    <span id="gemCount">0</span>
+</div>
+
+<!-- STAGE 1: BET SETUP PANEL -->
+<div class="setup-panel" id="setupPanel">
+    <h3>Select Your Base Bet</h3>
+    <div class="bet-presets">
+        <button class="bet-btn selected" onclick="setBet(50, this)">💎 50</button>
+        <button class="bet-btn" onclick="setBet(100, this)">💎 100</button>
+        <button class="bet-btn" onclick="setBet(500, this)">💎 500</button>
+        <button class="bet-btn" onclick="setBet(1000, this)">💎 1000</button>
+    </div>
+    <button class="start-btn" onclick="startTower()">🚀 Start Ascent</button>
+</div>
+
+<!-- STAGE 2: ACTIVE GAME PANEL -->
+<div class="game-panel" id="gamePanel">
+    <div class="floor-indicator" id="floorIndicator">Floor 1</div>
+    <div class="pot-display">Pot: <span id="potCount">0</span> 💎</div>
+    
+    <div class="grid" id="grid"></div>
+
+    <div class="controls">
+        <button id="bankBtn" class="bank" onclick="bankWinnings()">💰 Cash Out</button>
+    </div>
+</div>
+
+<!-- STAGE 3: INTERCEPT FAILURE MODAL -->
+<div class="failure-overlay" id="failureOverlay">
+    <h2>🚨 TOWER CRASH</h2>
+    <p>You hit a <strong>BOMB</strong>! Your current pot has dropped to 0.</p>
+    <div class="modal-btns">
+        <button class="continue-btn" id="continueBtn" onclick="payToContinue()">Pay 💎50 to continue.</button>
+        <button class="forfeit-btn" onclick="forfeitGame()">Forfeit Initial Bet</button>
+    </div>
+</div>
+
+<div class="message" id="message">
+    Choose your stakes and enter the elevator.
+</div>
+
+<script>
+// Game State Vars
+let baseBet = 50;
+let currentPot = 0;
+let previousPot = 0; 
+let currentFloor = 1;
+let isBoardLocked = false;
+let towerGameOver = true;
+let continuesUsed = 0;
+let floorCards = [];
+
+// Local wallets Fallback System if currency.js is absent
+let localWalletGems = 1000;
+
+const continueCostPercentages = [0.5, 1.0, 2.0]; // 50%, 100%, then 200% of Base Bet
+
+// DOM Elements
+const setupPanel = document.getElementById("setupPanel");
+const gamePanel = document.getElementById("gamePanel");
+const failureOverlay = document.getElementById("failureOverlay");
+const grid = document.getElementById("grid");
+const potCountText = document.getElementById("potCount");
+const floorIndicator = document.getElementById("floorIndicator");
+const messageText = document.getElementById("message");
+const continueBtn = document.getElementById("continueBtn");
+const gemCountDisplay = document.getElementById("gemCount");
+
+// Core Execution Hooks 
+function fetchGemsWallet() {
+    if (document.getElementById("gemCount")) {
+        // Attempt reading from core text if handled dynamically by currency.js
+        const val = parseInt(gemCountDisplay.textContent);
+        if(!isNaN(val) && val !== localWalletGems && val > 0) localWalletGems = val;
+    }
+}
+
+function syncUIWallet() {
+    gemCountDisplay.textContent = localWalletGems;
+}
+
+function playSound(src) {
+    const audio = new Audio(src);
+    audio.play().catch(() => {});
+}
+
+function setBet(amount, element) {
+    if (!towerGameOver) return;
+    baseBet = amount;
+    document.querySelectorAll(".bet-btn").forEach(btn => btn.classList.remove("selected"));
+    element.classList.add("selected");
+}
+
+function triggerVisualEffect(effectClass) {
+    document.body.classList.remove("effect-shake", "effect-gold", "effect-purple", "effect-green");
+    void document.body.offsetWidth; // Reflow reset
+    document.body.classList.add(effectClass);
+    setTimeout(() => document.body.classList.remove(effectClass), 550);
+}
+
+function animatePotValue() {
+    potCountText.textContent = currentPot;
+    potCountText.style.transform = "scale(1.25)";
+    setTimeout(() => potCountText.style.transform = "scale(1)", 200);
+}
+
+// Balance deduction hook
+function deductGems(amount) {
+    if (typeof spendGems === "function") {
+        return spendGems(amount);
+    } else {
+        fetchGemsWallet();
+        if (localWalletGems >= amount) {
+            localWalletGems -= amount;
+            syncUIWallet();
+            return true;
+        }
+        return false;
+    }
+}
+
+// Balance deposit hook
+function rewardGems(amount) {
+    if (typeof addGems === "function") {
+        addGems(amount);
+    } else {
+        fetchGemsWallet();
+        localWalletGems += amount;
+        syncUIWallet();
+    }
+}
+
+// Start Round Execution
+function startTower() {
+    fetchGemsWallet();
+    if (!deductGems(baseBet)) {
+        messageText.textContent = "❌ Not enough Gems to place this bet!";
+        return;
+    }
+
+    // State assignment
+    currentPot = baseBet;
+    previousPot = baseBet;
+    currentFloor = 1;
+    continuesUsed = 0;
+    towerGameOver = false;
+    isBoardLocked = false;
+
+    setupPanel.style.display = "none";
+    gamePanel.style.display = "flex";
+    messageText.textContent = "Pick a door to scale up your pot!";
+    
+    buildFloorLayout();
+}
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function generateFloorCards() {
+    const cards = [];
+    const isSafe = (currentFloor % 5 === 0);
+
+    if (isSafe) {
+        // Safe milestones floors: Zero risk multipliers
+        cards.push(1.5, 2.0, 3.0, 5.0);
+    } else {
+        // Standard high stakes distributions
+        cards.push(0);     // Complete Wiping Element
+        cards.push(0.5);   // Asset Slasher
+        cards.push(1.2);   // Conservative Increments
+        cards.push(1.6);   // Target Multiplier
+    }
+
+    shuffle(cards);
+    floorCards = cards;
+}
+
+function buildFloorLayout() {
+    grid.innerHTML = "";
+    generateFloorCards();
+
+    // Render floor status text
+    const isSafe = (currentFloor % 5 === 0);
+    if (isSafe) {
+        floorIndicator.textContent = `Floor ${currentFloor} (SAFE ZONE)`;
+        floorIndicator.classList.add("safe-floor");
+    } else {
+        floorIndicator.textContent = `Floor ${currentFloor}`;
+        floorIndicator.classList.remove("safe-floor");
+    }
+    
+    potCountText.textContent = currentPot;
+    potCountText.style.color = isSafe ? "#deb214" : "white";
+
+    // Build the 4-door interface
+    for (let i = 0; i < 4; i++) {
+        const cardNode = document.createElement("div");
+        cardNode.className = "card";
+
+        const inner = document.createElement("div");
+        inner.className = "inner";
+
+        const front = document.createElement("div");
+        front.className = "front";
+        front.innerHTML = `${i + 1}`;
+
+        const back = document.createElement("div");
+        back.className = "back";
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        cardNode.appendChild(inner);
+
+        cardNode.onclick = () => handleDoorFlip(i, cardNode, back);
+        grid.appendChild(cardNode);
+    }
+}
+
+function handleDoorFlip(index, cardElement, backSideElement) {
+    if (isBoardLocked || towerGameOver || cardElement.classList.contains("flipped")) return;
+
+    isBoardLocked = true;
+    cardElement.classList.add("flipped");
+    playSound("oxidvideos-taking-playing-card-522520.mp3");
+
+    const modifier = floorCards[index];
+    previousPot = currentPot; // Register recovery point fallback
+
+    // Set styling and value of flipped card
+    if (modifier === 0) {
+        backSideElement.innerHTML = "💣<br>x0";
+        backSideElement.className = "back mod-fail";
+    } else if (modifier === 0.5) {
+        backSideElement.innerHTML = "½";
+        backSideElement.className = "back mod-slasher";
+    } else if (modifier >= 3.0) {
+        backSideElement.innerHTML = `x${modifier}`;
+        backSideElement.className = "back mod-jackpot";
+    } else {
+        backSideElement.innerHTML = `x${modifier}`;
+        backSideElement.className = "back mod-gain";
+    }
+
+    // Mathematical process block
+    setTimeout(() => {
+        if (modifier === 0) {
+            currentPot = 0;
+            animatePotValue();
+            triggerVisualEffect("effect-shake");
+            playSound("roblox-explosion-sound.mp3");
+            
+            setTimeout(launchFailureModal, 700);
+        } else {
+            currentPot = Math.floor(currentPot * modifier);
+            animatePotValue();
+
+            // Fire response aesthetics
+            if (modifier === 0.5) {
+                triggerVisualEffect("effect-purple");
+                potCountText.style.color = "#ff4d4d";
+                messageText.textContent = "Ouch! Your pot got slashed in half!";
+            } else {
+                triggerVisualEffect("effect-green");
+                potCountText.style.color = "#1cfc03";
+                if (modifier >= 3) playSound("slot-machine-jackpot-sound-effect.mp3");
+                messageText.textContent = `Excellent! Multiplied pot by x${modifier}`;
+            }
+
+            // Auto advance tracking sequence after short reveal window
+            setTimeout(() => {
+                currentFloor++;
+                isBoardLocked = false;
+                buildFloorLayout();
+                messageText.textContent = `Ascended to Floor ${currentFloor}. Select a door!`;
+            }, 1300);
+        }
+    }, 300);
+}
+
+function launchFailureModal() {
+    // Scaled financial metrics relative to custom base stakes
+    const costMultiplier = continueCostPercentages[continuesUsed] || 4.0;
+    const computedFee = Math.floor(baseBet * costMultiplier);
+
+    continueBtn.textContent = `Pay 💎${computedFee} to Fix Glitch`;
+    failureOverlay.style.display = "flex";
+}
+
+function payToContinue() {
+    const costMultiplier = continueCostPercentages[continuesUsed] || 4.0;
+    const computedFee = Math.floor(baseBet * costMultiplier);
+
+    if (!deductGems(computedFee)) {
+        messageText.textContent = "❌ Insufficient Gems to buy back into the tower!";
+        return;
+    }
+
+    continuesUsed++;
+    currentPot = previousPot; // Restore snapshot array
+    failureOverlay.style.display = "none";
+    
+    // Clear lock mechanics, bypass floor
+    currentFloor++;
+    isBoardLocked = false;
+    buildFloorLayout();
+    messageText.textContent = `Continued! Pot restored to 💎${currentPot}. Welcome to Floor ${currentFloor}.`;
+}
+
+function forfeitGame() {
+    failureOverlay.style.display = "none";
+    messageText.textContent = `💀 Left empty-handed. Lost your initial bet of 💎${baseBet}.`;
+    resetToMenu();
+}
+
+function bankWinnings() {
+    if (towerGameOver || isBoardLocked || currentPot <= 0) return;
+
+    rewardGems(currentPot);
+    messageText.textContent = `💰 Secure payout! Walked away with 💎${currentPot} Gems.`;
+    playSound("slot-machine-jackpot-sound-effect.mp3");
+    
+    resetToMenu();
+}
+
+function resetToMenu() {
+    towerGameOver = true;
+    currentPot = 0;
+    gamePanel.style.display = "none";
+    setupPanel.style.display = "flex";
+    fetchGemsWallet();
+    syncUIWallet();
+}
+
+// Dynamic wallet refresh loop interface hooks
+setTimeout(() => {
+    fetchGemsWallet();
+    syncUIWallet();
+}, 200);
+</script>
+
+<script src="../../currency.js"></script>
+
+</body>
+</html>
