@@ -218,6 +218,35 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     min-height: 30px;
     text-align: center;
 }
+
+/* Special Card Visual Effects Keyframes */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0); }
+    10%, 30%, 50%, 70%, 90% { transform: translate(-6px, 4px); }
+    20%, 40%, 60%, 80% { transform: translate(6px, -4px); }
+}
+@keyframes flashGold {
+    0%, 100% { background-color: #111827; }
+    50% { background-color: #deb214; }
+}
+@keyframes flashBlue {
+    0%, 100% { background-color: #111827; }
+    50% { background-color: #11e6ed; }
+}
+@keyframes flashPurple {
+    0%, 100% { background-color: #111827; }
+    50% { background-color: #d9d325; }
+}
+@keyframes flashRed {
+    0%, 100% { background-color: #111827; }
+    50% { background-color: #9e0606; }
+}
+
+.effect-shake { animation: screenShake 0.5s ease-in-out; }
+.effect-gold { animation: flashGold 0.5s ease-in-out; }
+.effect-blue { animation: flashBlue 0.5s ease-in-out; }
+.effect-purple { animation: flashPurple 0.5s ease-in-out; }
+.effect-red { animation: flashRed 0.6s ease-in-out; }
 </style>
 </head>
 
@@ -281,6 +310,15 @@ function animateScore() {
         scoreText.style.transform = "scale(1)";
         scoreText.style.color = "white";
     }, 200);
+}
+
+function triggerEffect(className) {
+    document.body.classList.remove("effect-shake", "effect-gold", "effect-blue", "effect-purple", "effect-red");
+    void document.body.offsetWidth; // Force CSS reflow to restart animation
+    document.body.classList.add(className);
+    setTimeout(() => {
+        document.body.classList.remove(className);
+    }, 600);
 }
 
 function randomCard() {
@@ -399,21 +437,28 @@ function createCards() {
 
             if (value === "double") {
                 score *= 2;
+                triggerEffect("effect-blue");
             } else if (value === "half") {
                 score = Math.floor(score / 2);
+                triggerEffect("effect-purple");
             } else if (value === "bomb") {
                 score = 0;
                 gameOver = true;
                 playSound("roblox-explosion-sound.mp3");
+                triggerEffect("effect-red");
+                document.body.classList.add("effect-shake");
+                setTimeout(() => document.body.classList.remove("effect-shake"), 500);
                 revealRemainingCards();
                 message.textContent = "💣 BOOM! You lost everything!";
                 updateButtons();
             } else if (value === "jackpot1") {
                 score += 777;
                 playSound("slot-machine-jackpot-sound-effect.mp3");
+                triggerEffect("effect-gold");
             } else if (value === "jackpot2") {
                 score *= 7;
                 playSound("slot-machine-jackpot-sound-effect.mp3");
+                triggerEffect("effect-gold");
             } else {
                 score += value;
                 if (score < 0) score = 0;
@@ -421,8 +466,8 @@ function createCards() {
 
             animateScore();
 
-            if (cardsFlipped >= 5 && !gameOver) {
-                message.textContent = "🖐️ 5 cards flipped! Bank your score or get a new board.";
+            if (cardsFlipped >= 8 && !gameOver) {
+                message.textContent = "✋ 8 cards flipped! Bank your score or get a new board.";
             }
         };
 
@@ -442,7 +487,6 @@ function revealRemainingCards() {
     document.querySelectorAll(".card").forEach(card => card.classList.add("flipped"));
 }
 
-// Ensure game over is updated, so no more actions can occur after banking
 function bank() {
     if (gameOver || boardLocked) return;
 
