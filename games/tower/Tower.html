@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tower of fortune</title>
+<title>Tower of Fortune</title>
 
 <style>
 /* The 'X' Button Link */
@@ -11,26 +11,18 @@
             position: absolute;
             top: 15px;
             left: 15px;
-            
-            /* Sizing & Shape */
             width: 35px;
             height: 35px;
             background-color: #ff4d4d;
             border-radius: 50px;
-            
-            /* Flexbox to perfectly center the 'X' */
             display: flex;
             align-items: center;
             justify-content: center;
-            
-            /* Text/X Styling */
             color: white;
             font-family: 'Arial', sans-serif;
             font-size: 18px;
             font-weight: bold;
             text-decoration: none;
-            
-            /* Smooth transitions for hover effects */
             transition: background-color 0.2s, transform 0.1s;
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -155,10 +147,6 @@ h1 { margin-bottom: 10px; text-align: center; }
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-.safe-floor {
-    color: #deb214;
-    text-shadow: 0 0 8px gold;
-}
 
 .pot-display {
     font-size: 2.2rem;
@@ -184,6 +172,12 @@ h1 { margin-bottom: 10px; text-align: center; }
     aspect-ratio: 1 / 1.2;
     perspective: 1000px;
     cursor: pointer;
+    transition: opacity 0.5s ease;
+}
+
+/* Styling for unselected cards when revealed */
+.card.unselected-reveal {
+    opacity: 0.5;
 }
 
 .inner {
@@ -236,8 +230,8 @@ h1 { margin-bottom: 10px; text-align: center; }
     color: white; 
     text-shadow: 0 0 8px white, 0 0 15px gold;
 }
-.mod-slasher { background: #d9d325; color: #000; }
-.mod-fail { background: #111111; color: #ff3333; font-size: 2.5rem !important; }
+.mod-slasher { background: #d97706; color: white; } 
+.mod-fail { background: #111111; color: #ff3333; font-size: 2.5rem !important; border: 3px solid #ff3333; }
 
 @keyframes rainbow {
     from { filter: hue-rotate(0deg); }
@@ -302,7 +296,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     20%, 40%, 60%, 80% { transform: translate(5px, -3px); }
 }
 @keyframes flashGold { 0%, 100% { background-color: #111827; } 50% { background-color: #deb214; } }
-@keyframes flashPurple { 0%, 100% { background-color: #111827; } 50% { background-color: #7c3aed; } }
+@keyframes flashPurple { 0%, 100% { background-color: #111827; } 50% { background-color: #ba1a1a; } }
 @keyframes flashGreen { 0%, 100% { background-color: #111827; } 50% { background-color: #16a34a; } }
 
 .effect-shake { animation: screenShake 0.4s ease-in-out; }
@@ -314,7 +308,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 <body>
 
-<h1>🏙️ Tower of fortune</h1>
+<h1>🏙️ Tower of Fortune</h1>
 
 <div>
     <a href="../../index.html" class="close-button">&times;</a>
@@ -379,6 +373,9 @@ let localWalletGems = 1000;
 
 const continueCostPercentages = [0.5, 1.0, 2.0]; // 50%, 100%, then 200% of Base Bet
 
+// A varied pool of possible random multipliers for the remaining 3 doors
+const possibleMultipliers = [0.1, 0.4, 0.5, 0.75, 0.8, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0];
+
 // DOM Elements
 const setupPanel = document.getElementById("setupPanel");
 const gamePanel = document.getElementById("gamePanel");
@@ -393,7 +390,6 @@ const gemCountDisplay = document.getElementById("gemCount");
 // Core Execution Hooks 
 function fetchGemsWallet() {
     if (document.getElementById("gemCount")) {
-        // Attempt reading from core text if handled dynamically by currency.js
         const val = parseInt(gemCountDisplay.textContent);
         if(!isNaN(val) && val !== localWalletGems && val > 0) localWalletGems = val;
     }
@@ -462,7 +458,6 @@ function startTower() {
         return;
     }
 
-    // State assignment
     currentPot = baseBet;
     previousPot = baseBet;
     currentFloor = 1;
@@ -484,19 +479,14 @@ function shuffle(array) {
     }
 }
 
+/* 😈 EVERY FLOOR: 1 Bomb + 3 Random Multipliers */
 function generateFloorCards() {
-    const cards = [];
-    const isSafe = (currentFloor % 5 === 0);
+    const cards = [0]; // 1 guaranteed Bomb
 
-    if (isSafe) {
-        // Safe milestones floors: Zero risk multipliers
-        cards.push(1.5, 2.0, 3.0, 5.0);
-    } else {
-        // Standard high stakes distributions
-        cards.push(0);     // Complete Wiping Element
-        cards.push(0.5);   // Asset Slasher
-        cards.push(1.2);   // Conservative Increments
-        cards.push(1.6);   // Target Multiplier
+    // Generate 3 completely random multipliers from the pool
+    for (let i = 0; i < 3; i++) {
+        const randomMod = possibleMultipliers[Math.floor(Math.random() * possibleMultipliers.length)];
+        cards.push(randomMod);
     }
 
     shuffle(cards);
@@ -507,23 +497,15 @@ function buildFloorLayout() {
     grid.innerHTML = "";
     generateFloorCards();
 
-    // Render floor status text
-    const isSafe = (currentFloor % 5 === 0);
-    if (isSafe) {
-        floorIndicator.textContent = `Floor ${currentFloor} (SAFE ZONE)`;
-        floorIndicator.classList.add("safe-floor");
-    } else {
-        floorIndicator.textContent = `Floor ${currentFloor}`;
-        floorIndicator.classList.remove("safe-floor");
-    }
-    
+    floorIndicator.textContent = `Floor ${currentFloor}`;
     potCountText.textContent = currentPot;
-    potCountText.style.color = isSafe ? "#deb214" : "white";
+    potCountText.style.color = "white";
 
     // Build the 4-door interface
     for (let i = 0; i < 4; i++) {
         const cardNode = document.createElement("div");
         cardNode.className = "card";
+        cardNode.dataset.index = i;
 
         const inner = document.createElement("div");
         inner.className = "inner";
@@ -544,6 +526,22 @@ function buildFloorLayout() {
     }
 }
 
+function renderCardBackInfo(backSideElement, modifier) {
+    if (modifier === 0) {
+        backSideElement.innerHTML = "💣<br>x0";
+        backSideElement.className = "back mod-fail";
+    } else if (modifier < 1.0) {
+        backSideElement.innerHTML = `x${modifier}`;
+        backSideElement.className = "back mod-slasher";
+    } else if (modifier >= 3.0) {
+        backSideElement.innerHTML = `x${modifier}`;
+        backSideElement.className = "back mod-jackpot";
+    } else {
+        backSideElement.innerHTML = `x${modifier}`;
+        backSideElement.className = "back mod-gain";
+    }
+}
+
 function handleDoorFlip(index, cardElement, backSideElement) {
     if (isBoardLocked || towerGameOver || cardElement.classList.contains("flipped")) return;
 
@@ -554,22 +552,24 @@ function handleDoorFlip(index, cardElement, backSideElement) {
     const modifier = floorCards[index];
     previousPot = currentPot; // Register recovery point fallback
 
-    // Set styling and value of flipped card
-    if (modifier === 0) {
-        backSideElement.innerHTML = "💣<br>x0";
-        backSideElement.className = "back mod-fail";
-    } else if (modifier === 0.5) {
-        backSideElement.innerHTML = "½";
-        backSideElement.className = "back mod-slasher";
-    } else if (modifier >= 3.0) {
-        backSideElement.innerHTML = `x${modifier}`;
-        backSideElement.className = "back mod-jackpot";
-    } else {
-        backSideElement.innerHTML = `x${modifier}`;
-        backSideElement.className = "back mod-gain";
-    }
+    // Set the chosen card's text and style
+    renderCardBackInfo(backSideElement, modifier);
 
-    // Mathematical process block
+    // Reveal the other unselected cards half a second later
+    setTimeout(() => {
+        const allCards = document.querySelectorAll(".card");
+        allCards.forEach(c => {
+            if (c !== cardElement) {
+                const cIndex = parseInt(c.dataset.index);
+                const cBack = c.querySelector(".back");
+                renderCardBackInfo(cBack, floorCards[cIndex]);
+                c.classList.add("flipped");
+                c.classList.add("unselected-reveal");
+            }
+        });
+    }, 500);
+
+    // Mathematical processing
     setTimeout(() => {
         if (modifier === 0) {
             currentPot = 0;
@@ -577,40 +577,39 @@ function handleDoorFlip(index, cardElement, backSideElement) {
             triggerVisualEffect("effect-shake");
             playSound("roblox-explosion-sound.mp3");
             
-            setTimeout(launchFailureModal, 700);
+            // Wait slightly longer so player can see everything before modal pops
+            setTimeout(launchFailureModal, 1500);
         } else {
             currentPot = Math.floor(currentPot * modifier);
             animatePotValue();
 
-            // Fire response aesthetics
-            if (modifier === 0.5) {
+            if (modifier < 1.0) {
                 triggerVisualEffect("effect-purple");
                 potCountText.style.color = "#ff4d4d";
-                messageText.textContent = "Ouch! Your pot got slashed in half!";
+                messageText.textContent = `Oh no! Pot cut down by a factor of x${modifier}!`;
             } else {
                 triggerVisualEffect("effect-green");
                 potCountText.style.color = "#1cfc03";
                 if (modifier >= 3) playSound("slot-machine-jackpot-sound-effect.mp3");
-                messageText.textContent = `Excellent! Multiplied pot by x${modifier}`;
+                messageText.textContent = `Success! Multiplied pot by x${modifier}`;
             }
 
-            // Auto advance tracking sequence after short reveal window
+            // Advance floor sequence. Wait 2.2 seconds so player can analyze the board
             setTimeout(() => {
                 currentFloor++;
                 isBoardLocked = false;
                 buildFloorLayout();
                 messageText.textContent = `Ascended to Floor ${currentFloor}. Select a door!`;
-            }, 1300);
+            }, 2200);
         }
-    }, 300);
+    }, 400); // 400ms delay to process the math after clicking
 }
 
 function launchFailureModal() {
-    // Scaled financial metrics relative to custom base stakes
     const costMultiplier = continueCostPercentages[continuesUsed] || 4.0;
     const computedFee = Math.floor(baseBet * costMultiplier);
 
-    continueBtn.textContent = `Pay 💎${computedFee} to Fix Glitch`;
+    continueBtn.textContent = `Pay 💎${computedFee} to continue.`;
     failureOverlay.style.display = "flex";
 }
 
@@ -624,10 +623,9 @@ function payToContinue() {
     }
 
     continuesUsed++;
-    currentPot = previousPot; // Restore snapshot array
+    currentPot = previousPot; 
     failureOverlay.style.display = "none";
     
-    // Clear lock mechanics, bypass floor
     currentFloor++;
     isBoardLocked = false;
     buildFloorLayout();
@@ -659,7 +657,6 @@ function resetToMenu() {
     syncUIWallet();
 }
 
-// Dynamic wallet refresh loop interface hooks
 setTimeout(() => {
     fetchGemsWallet();
     syncUIWallet();
