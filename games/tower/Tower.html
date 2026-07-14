@@ -423,7 +423,6 @@ const gemCountDisplay = document.getElementById("gemCount");
 function fetchGemsWallet() {
     if (document.getElementById("gemCount")) {
         const val = parseInt(gemCountDisplay.textContent);
-        if(!isNaN(val) && val !== localWalletGems && val > 0) localWalletGems = val;
     }
 }
 
@@ -460,26 +459,14 @@ function animatePotValue() {
 function deductGems(amount) {
     if (typeof spendGems === "function") {
         return spendGems(amount);
-    } else {
-        fetchGemsWallet();
-        if (localWalletGems >= amount) {
-            localWalletGems -= amount;
-            syncUIWallet();
-            return true;
-        }
-        return false;
-    }
+    } 
 }
 
 // Balance deposit hook
 function rewardGems(amount) {
     if (typeof addGems === "function") {
         addGems(amount);
-    } else {
-        fetchGemsWallet();
-        localWalletGems += amount;
-        syncUIWallet();
-    }
+    } 
 }
 
 // Start Round Execution
