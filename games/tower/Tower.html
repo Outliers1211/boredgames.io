@@ -373,8 +373,39 @@ let localWalletGems = 1000;
 
 const continueCostPercentages = [0.5, 1.0, 2.0]; // 50%, 100%, then 200% of Base Bet
 
-// A varied pool of possible random multipliers for the remaining 3 doors
-const possibleMultipliers = [0.1, 0.4, 0.5, 0.75, 0.8, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0];
+// 📊 WEIGHTED PROBABILITY SYSTEM
+// Higher weight = more likely to appear. 
+const weightedMultipliers = [
+    { value: 0.1, weight: 10 },   // 0.1x (Soul crusher) - Uncommon
+    { value: 0.4, weight: 15 },   // 0.4x (Heavy slasher)
+    { value: 0.5, weight: 20 },   // 0.5x (Half)
+    { value: 0.8, weight: 30 },   // 0.8x (Light tax) - Common
+    { value: 1.1, weight: 40 },   // 1.1x (Tiny gain) - Very Common
+    { value: 1.2, weight: 35 },   // 1.2x (Small gain) - Very Common
+    { value: 1.5, weight: 25 },   // 1.5x (Decent gain) - Common
+    { value: 1.8, weight: 15 },   // 1.8x (Good gain)
+    { value: 2.0, weight: 10 },   // 2.0x (Double) - Uncommon
+    { value: 2.5, weight: 6 },    // 2.5x (Great) - Rare
+    { value: 3.0, weight: 3 },    // 3.0x (Jackpot) - Very Rare
+    { value: 4.0, weight: 2 },    // 4.0x (Huge Jackpot) - Ultra Rare
+    { value: 5.0, weight: 1 },    // 5.0x (Insane Jackpot) - Mythic
+    { value: 10.0, weight: 1 }    // 10.0x (God Tier) - Mythic
+];
+
+// Calculate total weight dynamically
+const totalWeight = weightedMultipliers.reduce((sum, item) => sum + item.weight, 0);
+
+function getRandomMultiplier() {
+    let randomNum = Math.random() * totalWeight;
+    for (const item of weightedMultipliers) {
+        if (randomNum < item.weight) {
+            return item.value;
+        }
+        randomNum -= item.weight;
+    }
+    return 1.1; // Fallback
+}
+
 
 // DOM Elements
 const setupPanel = document.getElementById("setupPanel");
@@ -479,14 +510,13 @@ function shuffle(array) {
     }
 }
 
-/* 😈 EVERY FLOOR: 1 Bomb + 3 Random Multipliers */
+/* 😈 EVERY FLOOR: 1 Bomb + 3 Weighted Random Multipliers */
 function generateFloorCards() {
     const cards = [0]; // 1 guaranteed Bomb
 
-    // Generate 3 completely random multipliers from the pool
+    // Generate 3 random multipliers based on the weights
     for (let i = 0; i < 3; i++) {
-        const randomMod = possibleMultipliers[Math.floor(Math.random() * possibleMultipliers.length)];
-        cards.push(randomMod);
+        cards.push(getRandomMultiplier());
     }
 
     shuffle(cards);
