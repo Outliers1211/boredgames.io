@@ -391,7 +391,7 @@ function createCards() {
         card.appendChild(inner);
 
         card.onclick = () => {
-            if (gameOver || boardLocked || card.classList.contains("flipped") || cardsFlipped >= 5) return;
+            if (gameOver || boardLocked || card.classList.contains("flipped") || cardsFlipped >= 8) return;
 
             card.classList.add("flipped");
             cardsFlipped++;
