@@ -49,6 +49,11 @@ if(localStorage.getItem("gems") === null){
 
 let gems = Number(localStorage.getItem("gems"));
 
+// Read the shared balance without creating a separate per-game wallet.
+function getGems(){
+    return gems;
+}
+
 // Save
 function saveGems(){
     localStorage.setItem("gems", gems);
